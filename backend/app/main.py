@@ -106,6 +106,7 @@ async def weekly_stats(
     total_minutes = 0.0
     by_subject: dict[str, float] = {}
     by_day = [0.0] * 7
+    by_day_by_subject: dict[str, list[float]] = {}
     last_sessions = []
 
     for s in sessions:
@@ -113,8 +114,12 @@ async def weekly_stats(
         total_minutes += dur
         by_subject[s.subject] = by_subject.get(s.subject, 0.0) + dur
 
-        day_idx = (s.start_time.weekday())
+        day_idx = s.start_time.weekday()
         by_day[day_idx] += dur
+
+        if s.subject not in by_day_by_subject:
+            by_day_by_subject[s.subject] = [0.0] * 7
+        by_day_by_subject[s.subject][day_idx] += dur
 
         last_sessions.append(
             LastSession(
@@ -130,6 +135,7 @@ async def weekly_stats(
         total_minutes=round(total_minutes, 2),
         by_subject=by_subject,
         by_day=[round(v, 2) for v in by_day],
+        by_day_by_subject={k: [round(v, 2) for v in vals] for k, vals in by_day_by_subject.items()},
         last_sessions=last_sessions[:10],
     )
 

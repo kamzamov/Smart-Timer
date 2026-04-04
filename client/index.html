@@ -307,27 +307,68 @@
                 document.getElementById('totalHours').textContent = (data.total_minutes / 60).toFixed(1);
                 document.getElementById('sessionCount').textContent = data.last_sessions.length;
 
-                // Day chart
+                // Day chart — stacked bar by subject
                 const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+                const COLORS = [
+                    '#4361ee','#e63946','#2ec4b6','#f77f00','#7209b7',
+                    '#06d6a0','#ef476f','#118ab2','#073b4c','#ff6b6b',
+                    '#5f27cd','#feca57','#48dbfb','#ff9ff3','#54a0ff',
+                ];
                 if (dayChart) dayChart.destroy();
                 const ctx = document.getElementById('dayChart').getContext('2d');
+
+                const byDayBySubject = data.by_day_by_subject || {};
+                const subjects = Object.keys(byDayBySubject);
+                const datasets = subjects.map((subj, i) => ({
+                    label: subj,
+                    data: byDayBySubject[subj],
+                    backgroundColor: COLORS[i % COLORS.length],
+                    borderRadius: 4,
+                }));
+
+                // If no subject data yet, show empty bar
+                if (datasets.length === 0) {
+                    datasets.push({
+                        label: 'Minutes',
+                        data: data.by_day,
+                        backgroundColor: '#4361ee',
+                        borderRadius: 6,
+                    });
+                }
+
                 dayChart = new Chart(ctx, {
                     type: 'bar',
-                    data: {
-                        labels: days,
-                        datasets: [{
-                            label: 'Minutes',
-                            data: data.by_day,
-                            backgroundColor: '#4361ee',
-                            borderRadius: 6,
-                        }]
-                    },
+                    data: { labels: days, datasets },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
+                        plugins: {
+                            legend: {
+                                display: subjects.length > 1,
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} min`;
+                                    },
+                                    footer: function(tooltipItems) {
+                                        if (subjects.length > 1) {
+                                            const total = tooltipItems.reduce((sum, item) => sum + item.parsed.y, 0);
+                                            return `Total: ${total.toFixed(1)} min`;
+                                        }
+                                        return '';
+                                    }
+                                }
+                            }
+                        },
                         scales: {
-                            y: { beginAtZero: true, ticks: { stepSize: 15 } }
+                            x: { stacked: true },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                ticks: { stepSize: 15 }
+                            }
                         }
                     }
                 });

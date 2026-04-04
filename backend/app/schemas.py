@@ -35,6 +35,7 @@ class WeeklyStats(BaseModel):
     total_minutes: float
     by_subject: Dict[str, float]
     by_day: List[float]
+    by_day_by_subject: Dict[str, List[float]]
     last_sessions: List[LastSession]
 
 
