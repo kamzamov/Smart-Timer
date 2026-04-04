@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Timer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        header {
+            text-align: center;
+            padding: 30px 0 20px;
+        }
+        header h1 { font-size: 2.2rem; color: #16213e; }
+        header p { color: #666; margin-top: 5px; }
+
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .card h2 { font-size: 1.2rem; margin-bottom: 16px; color: #16213e; }
+
+        /* Timer Section */
+        .timer-section { text-align: center; }
+        .subject-input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .subject-input-group input,
+        .subject-input-group select {
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            min-width: 200px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .subject-input-group input:focus,
+        .subject-input-group select:focus {
+            border-color: #4361ee;
+        }
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: #16213e;
+            margin: 20px 0;
+        }
+        .timer-display.running { color: #4361ee; }
+        .btn-group { display: flex; gap: 12px; justify-content: center; }
+        .btn {
+            padding: 14px 36px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-start { background: #4361ee; color: #fff; }
+        .btn-start:hover:not(:disabled) { background: #3a56d4; }
+        .btn-stop { background: #e63946; color: #fff; }
+        .btn-stop:hover:not(:disabled) { background: #c5303c; }
+
+        /* Stats */
+        .stats-summary {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            flex: 1;
+            min-width: 140px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-box .value { font-size: 1.8rem; font-weight: 700; color: #4361ee; }
+        .stat-box .label { font-size: 0.85rem; color: #666; margin-top: 4px; }
+
+        .chart-container { position: relative; height: 250px; margin-top: 10px; }
+
+        .subject-breakdown { margin-top: 16px; }
+        .subject-breakdown table { width: 100%; border-collapse: collapse; }
+        .subject-breakdown th, .subject-breakdown td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .subject-breakdown th { background: #f8f9fa; font-size: 0.85rem; color: #666; }
+
+        .sessions-list { margin-top: 16px; }
+        .session-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9rem;
+        }
+        .session-item .subj { font-weight: 600; }
+        .session-item .dur { color: #4361ee; font-weight: 600; }
+        .session-item .time { color: #888; }
+
+        .export-btn {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: #2ec4b6;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .export-btn:hover { background: #28b0a3; }
+
+        .status-msg {
+            text-align: center;
+            padding: 8px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .status-msg.error { background: #fde8e8; color: #e63946; }
+        .status-msg.success { background: #e8f5e9; color: #2e7d32; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>⏱ Smart Timer</h1>
+            <p>Track your study sessions</p>
+        </header>
+
+        <!-- Timer -->
+        <div class="card timer-section">
+            <h2>Study Session</h2>
+            <div class="subject-input-group">
+                <input type="text" id="subjectInput" list="subjectList" placeholder="Enter subject..." />
+                <datalist id="subjectList"></datalist>
+            </div>
+            <div class="timer-display" id="timerDisplay">00:00:00</div>
+            <div class="btn-group">
+                <button class="btn btn-start" id="btnStart" onclick="startSession()">▶ Start</button>
+                <button class="btn btn-stop" id="btnStop" onclick="stopSession()" disabled>⏹ Stop</button>
+            </div>
+            <div id="statusMsg"></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="card">
+            <h2>📊 Weekly Statistics</h2>
+            <div class="stats-summary">
+                <div class="stat-box">
+                    <div class="value" id="totalMinutes">0</div>
+                    <div class="label">Total Minutes</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="totalHours">0</div>
+                    <div class="label">Total Hours</div>
+                </div>
+                <div class="stat-box">
+                    <div class="value" id="sessionCount">0</div>
+                    <div class="label">Sessions</div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="dayChart"></canvas>
+            </div>
+
+            <div class="subject-breakdown" id="subjectBreakdown" style="display:none;">
+                <h3 style="font-size:1rem; margin-bottom:10px;">By Subject</h3>
+                <table>
+                    <thead><tr><th>Subject</th><th>Minutes</th><th>Hours</th></tr></thead>
+                    <tbody id="subjectTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="sessions-list" id="sessionsList" style="display:none;">
+                <h3 style="font-size:1rem; margin: 16px 0 10px;">Recent Sessions</h3>
+                <div id="sessionsListContent"></div>
+            </div>
+
+            <button class="export-btn" onclick="exportCSV()">📥 Export CSV</button>
+        </div>
+    </div>
+
+    <script>
+        const API = '/api';
+        let currentSessionId = null;
+        let timerInterval = null;
+        let startTime = null;
+        let dayChart = null;
+
+        // Format seconds to HH:MM:SS
+        function formatTime(totalSeconds) {
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('statusMsg');
+            el.className = `status-msg ${type}`;
+            el.textContent = msg;
+            setTimeout(() => { el.textContent = ''; el.className = ''; }, 4000);
+        }
+
+        function updateTimerDisplay() {
+            if (!startTime) return;
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            document.getElementById('timerDisplay').textContent = formatTime(elapsed);
+        }
+
+        async function loadSubjects() {
+            try {
+                const res = await fetch(`${API}/subjects`, { headers: { 'X-User-Key': 'demo' } });
+                const data = await res.json();
+                const datalist = document.getElementById('subjectList');
+                datalist.innerHTML = '';
+                data.forEach(item => {
+                    const opt = document.createElement('option');
+                    opt.value = item.subject;
+                    datalist.appendChild(opt);
+                });
+            } catch (e) { /* ignore */ }
+        }
+
+        async function startSession() {
+            const subject = document.getElementById('subjectInput').value.trim();
+            if (!subject) {
+                showStatus('Please enter a subject name', 'error');
+                return;
+            }
+            try {
+                const res = await fetch(`${API}/sessions/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-User-Key': 'demo' },
+                    body: JSON.stringify({ subject, user_key: 'demo' })
+                });
+                if (!res.ok) { showStatus('Failed to start session', 'error'); return; }
+                const data = await res.json();
+                currentSessionId = data.id;
+                startTime = Date.now();
+                document.getElementById('timerDisplay').classList.add('running');
+                document.getElementById('btnStart').disabled = true;
+                document.getElementById('btnStop').disabled = false;
+                document.getElementById('subjectInput').disabled = true;
+                timerInterval = setInterval(updateTimerDisplay, 1000);
+                showStatus(`Started: ${subject}`, 'success');
+            } catch (e) {
+                showStatus('Network error', 'error');
+            }
+        }
+
+        async function stopSession() {
+            if (!currentSessionId) return;
+            try {
+                const res = await fetch(`${API}/sessions/${currentSessionId}/stop`, {
+                    method: 'POST',
+                    headers: { 'X-User-Key': 'demo' }
+                });
+                if (!res.ok) { showStatus('Failed to stop session', 'error'); return; }
+                const data = await res.json();
+                clearInterval(timerInterval);
+                timerInterval = null;
+                currentSessionId = null;
+                startTime = null;
+                document.getElementById('timerDisplay').textContent = '00:00:00';
+                document.getElementById('timerDisplay').classList.remove('running');
+                document.getElementById('btnStart').disabled = false;
+                document.getElementById('btnStop').disabled = true;
+                document.getElementById('subjectInput').disabled = false;
+                showStatus(`Stopped. Duration: ${data.duration_minutes.toFixed(1)} min`, 'success');
+                loadStats();
+                loadSubjects();
+            } catch (e) {
+                showStatus('Network error', 'error');
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`${API}/stats/weekly`, { headers: { 'X-User-Key': 'demo' } });
+                const data = await res.json();
+
+                document.getElementById('totalMinutes').textContent = Math.round(data.total_minutes);
+                document.getElementById('totalHours').textContent = (data.total_minutes / 60).toFixed(1);
+                document.getElementById('sessionCount').textContent = data.last_sessions.length;
+
+                // Day chart
+                const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+                if (dayChart) dayChart.destroy();
+                const ctx = document.getElementById('dayChart').getContext('2d');
+                dayChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: days,
+                        datasets: [{
+                            label: 'Minutes',
+                            data: data.by_day,
+                            backgroundColor: '#4361ee',
+                            borderRadius: 6,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 15 } }
+                        }
+                    }
+                });
+
+                // Subject breakdown
+                const subjects = Object.entries(data.by_subject);
+                const sbDiv = document.getElementById('subjectBreakdown');
+                const tbody = document.getElementById('subjectTableBody');
+                if (subjects.length > 0) {
+                    sbDiv.style.display = 'block';
+                    tbody.innerHTML = subjects
+                        .sort((a,b) => b[1] - a[1])
+                        .map(([subj, mins]) =>
+                            `<tr><td>${subj}</td><td>${Math.round(mins)}</td><td>${(mins/60).toFixed(1)}</td></tr>`
+                        ).join('');
+                } else {
+                    sbDiv.style.display = 'none';
+                }
+
+                // Recent sessions
+                const slDiv = document.getElementById('sessionsList');
+                const slContent = document.getElementById('sessionsListContent');
+                if (data.last_sessions.length > 0) {
+                    slDiv.style.display = 'block';
+                    slContent.innerHTML = data.last_sessions.map(s => {
+                        const startStr = new Date(s.start_time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+                        return `<div class="session-item">
+                            <span class="subj">${s.subject}</span>
+                            <span class="time">${startStr}</span>
+                            <span class="dur">${s.duration_minutes.toFixed(1)} min</span>
+                        </div>`;
+                    }).join('');
+                } else {
+                    slDiv.style.display = 'none';
+                }
+            } catch (e) { /* ignore */ }
+        }
+
+        function exportCSV() {
+            window.open(`${API}/export/csv?user_key=demo`, '_blank');
+        }
+
+        // Init
+        loadSubjects();
+        loadStats();
+        // Refresh stats every 30s
+        setInterval(loadStats, 30000);
+    </script>
+</body>
+</html>
