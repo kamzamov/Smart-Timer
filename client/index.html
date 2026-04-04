@@ -255,9 +255,14 @@
                 const res = await fetch(`${API}/sessions/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'X-User-Key': 'demo' },
-                    body: JSON.stringify({ subject, user_key: 'demo' })
+                    body: JSON.stringify({ subject: subject, user_key: 'demo' })
                 });
-                if (!res.ok) { showStatus('Failed to start session', 'error'); return; }
+                if (!res.ok) {
+                    const err = await res.text();
+                    console.error('Start failed:', res.status, err);
+                    showStatus('Failed to start session', 'error');
+                    return;
+                }
                 const data = await res.json();
                 currentSessionId = data.id;
                 startTime = Date.now();
@@ -266,8 +271,9 @@
                 document.getElementById('btnStop').disabled = false;
                 document.getElementById('subjectInput').disabled = true;
                 timerInterval = setInterval(updateTimerDisplay, 1000);
-                showStatus(`Started: ${subject}`, 'success');
+                showStatus('Started: ' + subject, 'success');
             } catch (e) {
+                console.error('Start error:', e);
                 showStatus('Network error', 'error');
             }
         }
@@ -279,7 +285,12 @@
                     method: 'POST',
                     headers: { 'X-User-Key': 'demo' }
                 });
-                if (!res.ok) { showStatus('Failed to stop session', 'error'); return; }
+                if (!res.ok) {
+                    const err = await res.text();
+                    console.error('Stop failed:', res.status, err);
+                    showStatus('Failed to stop session', 'error');
+                    return;
+                }
                 const data = await res.json();
                 clearInterval(timerInterval);
                 timerInterval = null;
@@ -290,10 +301,11 @@
                 document.getElementById('btnStart').disabled = false;
                 document.getElementById('btnStop').disabled = true;
                 document.getElementById('subjectInput').disabled = false;
-                showStatus(`Stopped. Duration: ${data.duration_minutes.toFixed(1)} min`, 'success');
+                showStatus('Stopped. Duration: ' + data.duration_minutes.toFixed(1) + ' min', 'success');
                 loadStats();
                 loadSubjects();
             } catch (e) {
+                console.error('Stop error:', e);
                 showStatus('Network error', 'error');
             }
         }
@@ -301,11 +313,15 @@
         async function loadStats() {
             try {
                 const res = await fetch(`${API}/stats/weekly`, { headers: { 'X-User-Key': 'demo' } });
+                if (!res.ok) { console.error('Stats API error', res.status); return; }
                 const data = await res.json();
 
-                document.getElementById('totalMinutes').textContent = Math.round(data.total_minutes);
-                document.getElementById('totalHours').textContent = (data.total_minutes / 60).toFixed(1);
-                document.getElementById('sessionCount').textContent = data.last_sessions.length;
+                const totalMin = data.total_minutes || 0;
+                const sessions = data.last_sessions || [];
+
+                document.getElementById('totalMinutes').textContent = Math.round(totalMin);
+                document.getElementById('totalHours').textContent = (totalMin / 60).toFixed(1);
+                document.getElementById('sessionCount').textContent = sessions.length;
 
                 // Day chart — stacked bar by subject
                 const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -314,23 +330,22 @@
                     '#06d6a0','#ef476f','#118ab2','#073b4c','#ff6b6b',
                     '#5f27cd','#feca57','#48dbfb','#ff9ff3','#54a0ff',
                 ];
-                if (dayChart) dayChart.destroy();
+                if (dayChart) { dayChart.destroy(); dayChart = null; }
                 const ctx = document.getElementById('dayChart').getContext('2d');
 
                 const byDayBySubject = data.by_day_by_subject || {};
-                const subjects = Object.keys(byDayBySubject);
-                const datasets = subjects.map((subj, i) => ({
+                const subjectNames = Object.keys(byDayBySubject);
+                const datasets = subjectNames.map((subj, i) => ({
                     label: subj,
-                    data: byDayBySubject[subj],
+                    data: byDayBySubject[subj] || [0,0,0,0,0,0,0],
                     backgroundColor: COLORS[i % COLORS.length],
                     borderRadius: 4,
                 }));
 
-                // If no subject data yet, show empty bar
                 if (datasets.length === 0) {
                     datasets.push({
                         label: 'Minutes',
-                        data: data.by_day,
+                        data: data.by_day || [0,0,0,0,0,0,0],
                         backgroundColor: '#4361ee',
                         borderRadius: 6,
                     });
@@ -338,23 +353,23 @@
 
                 dayChart = new Chart(ctx, {
                     type: 'bar',
-                    data: { labels: days, datasets },
+                    data: { labels: days, datasets: datasets },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                display: subjects.length > 1,
+                                display: subjectNames.length > 1,
                                 position: 'top',
                             },
                             tooltip: {
                                 callbacks: {
-                                    label: function(ctx) {
-                                        return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)} min`;
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(1)} min`;
                                     },
-                                    footer: function(tooltipItems) {
-                                        if (subjects.length > 1) {
-                                            const total = tooltipItems.reduce((sum, item) => sum + item.parsed.y, 0);
+                                    footer: function(items) {
+                                        if (subjectNames.length > 1) {
+                                            const total = items.reduce((sum, item) => sum + item.parsed.y, 0);
                                             return `Total: ${total.toFixed(1)} min`;
                                         }
                                         return '';
@@ -374,12 +389,13 @@
                 });
 
                 // Subject breakdown
-                const subjects = Object.entries(data.by_subject);
+                const bySubject = data.by_subject || {};
+                const subjectEntries = Object.entries(bySubject);
                 const sbDiv = document.getElementById('subjectBreakdown');
                 const tbody = document.getElementById('subjectTableBody');
-                if (subjects.length > 0) {
+                if (subjectEntries.length > 0) {
                     sbDiv.style.display = 'block';
-                    tbody.innerHTML = subjects
+                    tbody.innerHTML = subjectEntries
                         .sort((a,b) => b[1] - a[1])
                         .map(([subj, mins]) =>
                             `<tr><td>${subj}</td><td>${Math.round(mins)}</td><td>${(mins/60).toFixed(1)}</td></tr>`
@@ -391,9 +407,9 @@
                 // Recent sessions
                 const slDiv = document.getElementById('sessionsList');
                 const slContent = document.getElementById('sessionsListContent');
-                if (data.last_sessions.length > 0) {
+                if (sessions.length > 0) {
                     slDiv.style.display = 'block';
-                    slContent.innerHTML = data.last_sessions.map(s => {
+                    slContent.innerHTML = sessions.map(s => {
                         const startStr = new Date(s.start_time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
                         return `<div class="session-item">
                             <span class="subj">${s.subject}</span>
@@ -404,7 +420,9 @@
                 } else {
                     slDiv.style.display = 'none';
                 }
-            } catch (e) { /* ignore */ }
+            } catch (e) {
+                console.error('loadStats error:', e);
+            }
         }
 
         function exportCSV() {
