@@ -3,9 +3,32 @@ from datetime import datetime
 from typing import Optional, List, Dict
 
 
+# --- Auth ---
+class UserRegister(BaseModel):
+    username: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    username: str
+
+
+# --- Sessions ---
 class SessionStart(BaseModel):
     subject: str
-    user_key: str = "demo"
+
+
+class SessionEdit(BaseModel):
+    subject: Optional[str] = None
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
 
 
 class SessionResponse(BaseModel):
@@ -18,11 +41,7 @@ class SessionResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class ByDayStats(BaseModel):
-    day: str
-    minutes: float
-
-
+# --- Stats ---
 class LastSession(BaseModel):
     id: int
     subject: str

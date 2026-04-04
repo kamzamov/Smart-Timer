@@ -17,10 +17,68 @@
         header {
             text-align: center;
             padding: 30px 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         header h1 { font-size: 2.2rem; color: #16213e; }
         header p { color: #666; margin-top: 5px; }
+        .user-info { font-size: 0.9rem; color: #666; }
+        .user-info strong { color: #4361ee; }
+        .btn-logout {
+            padding: 8px 16px;
+            background: #e63946;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+        .btn-logout:hover { background: #c5303c; }
 
+        /* Auth */
+        .auth-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: #fff;
+            border-radius: 12px;
+            padding: 32px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .auth-container h2 { text-align: center; margin-bottom: 24px; color: #16213e; }
+        .auth-container input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            outline: none;
+        }
+        .auth-container input:focus { border-color: #4361ee; }
+        .auth-container .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #4361ee;
+            color: #fff;
+        }
+        .auth-container .btn:hover { background: #3a56d4; }
+        .auth-toggle {
+            text-align: center;
+            margin-top: 16px;
+            color: #4361ee;
+            cursor: pointer;
+        }
+        .auth-toggle:hover { text-decoration: underline; }
+
+        /* App */
+        #appView { display: none; }
         .card {
             background: #fff;
             border-radius: 12px;
@@ -29,8 +87,6 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         .card h2 { font-size: 1.2rem; margin-bottom: 16px; color: #16213e; }
-
-        /* Timer Section */
         .timer-section { text-align: center; }
         .subject-input-group {
             display: flex;
@@ -39,8 +95,7 @@
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
-        .subject-input-group input,
-        .subject-input-group select {
+        .subject-input-group input {
             padding: 12px 16px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
@@ -49,10 +104,7 @@
             outline: none;
             transition: border-color 0.2s;
         }
-        .subject-input-group input:focus,
-        .subject-input-group select:focus {
-            border-color: #4361ee;
-        }
+        .subject-input-group input:focus { border-color: #4361ee; }
         .timer-display {
             font-size: 4rem;
             font-weight: 700;
@@ -77,7 +129,6 @@
         .btn-stop { background: #e63946; color: #fff; }
         .btn-stop:hover:not(:disabled) { background: #c5303c; }
 
-        /* Stats */
         .stats-summary {
             display: flex;
             gap: 20px;
@@ -94,7 +145,6 @@
         }
         .stat-box .value { font-size: 1.8rem; font-weight: 700; color: #4361ee; }
         .stat-box .label { font-size: 0.85rem; color: #666; margin-top: 4px; }
-
         .chart-container { position: relative; height: 250px; margin-top: 10px; }
 
         .subject-breakdown { margin-top: 16px; }
@@ -110,13 +160,26 @@
         .session-item {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 10px 0;
             border-bottom: 1px solid #eee;
             font-size: 0.9rem;
         }
-        .session-item .subj { font-weight: 600; }
-        .session-item .dur { color: #4361ee; font-weight: 600; }
-        .session-item .time { color: #888; }
+        .session-item .subj { font-weight: 600; flex: 1; }
+        .session-item .dur { color: #4361ee; font-weight: 600; margin: 0 12px; }
+        .session-item .time { color: #888; margin-right: 12px; }
+        .session-actions button {
+            padding: 4px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 4px;
+        }
+        .btn-edit { background: #f77f00; color: #fff; }
+        .btn-edit:hover { background: #e06f00; }
+        .btn-del { background: #e63946; color: #fff; }
+        .btn-del:hover { background: #c5303c; }
 
         .export-btn {
             display: inline-block;
@@ -140,13 +203,77 @@
         }
         .status-msg.error { background: #fde8e8; color: #e63946; }
         .status-msg.success { background: #e8f5e9; color: #2e7d32; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            width: 360px;
+            max-width: 90%;
+        }
+        .modal h3 { margin-bottom: 16px; }
+        .modal input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            outline: none;
+        }
+        .modal input:focus { border-color: #4361ee; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 8px; }
+        .modal-btns button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .modal-save { background: #4361ee; color: #fff; }
+        .modal-cancel { background: #e0e0e0; color: #333; }
     </style>
 </head>
 <body>
+
+<!-- Auth View -->
+<div id="authView">
+    <div class="auth-container">
+        <h2 id="authTitle">Login</h2>
+        <input type="text" id="authUsername" placeholder="Username" autocomplete="username" />
+        <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password" />
+        <button class="btn" id="authBtn" onclick="handleAuth()">Login</button>
+        <div class="auth-toggle" id="authToggle" onclick="toggleAuthMode()">
+            Don't have an account? <strong>Register</strong>
+        </div>
+        <div id="authStatus"></div>
+    </div>
+</div>
+
+<!-- App View -->
+<div id="appView">
     <div class="container">
         <header>
-            <h1>⏱ Smart Timer</h1>
-            <p>Track your study sessions</p>
+            <div>
+                <h1>⏱ Smart Timer</h1>
+                <p>Track your study sessions</p>
+            </div>
+            <div class="user-info">
+                <strong id="displayUsername"></strong>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
         </header>
 
         <!-- Timer -->
@@ -202,238 +329,381 @@
             <button class="export-btn" onclick="exportCSV()">📥 Export CSV</button>
         </div>
     </div>
+</div>
 
-    <script>
-        const API = '/api';
-        let currentSessionId = null;
-        let timerInterval = null;
-        let startTime = null;
-        let dayChart = null;
+<!-- Edit Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <h3>Edit Session</h3>
+        <input type="text" id="editSubject" placeholder="Subject" />
+        <label style="font-size:0.85rem;color:#666;">Start time</label>
+        <input type="datetime-local" id="editStartTime" />
+        <label style="font-size:0.85rem;color:#666;">End time</label>
+        <input type="datetime-local" id="editEndTime" />
+        <div class="modal-btns">
+            <button class="modal-cancel" onclick="closeEditModal()">Cancel</button>
+            <button class="modal-save" onclick="saveEdit()">Save</button>
+        </div>
+    </div>
+</div>
 
-        // Format seconds to HH:MM:SS
-        function formatTime(totalSeconds) {
-            const h = Math.floor(totalSeconds / 3600);
-            const m = Math.floor((totalSeconds % 3600) / 60);
-            const s = totalSeconds % 60;
-            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+<script>
+    const API = '/api';
+    let token = localStorage.getItem('st_token');
+    let username = localStorage.getItem('st_username');
+    let isRegisterMode = false;
+    let currentSessionId = null;
+    let timerInterval = null;
+    let startTime = null;
+    let dayChart = null;
+    let editingSessionId = null;
+
+    // --- Auth ---
+    function showAuthStatus(msg, isError) {
+        const el = document.getElementById('authStatus');
+        el.innerHTML = `<div class="status-msg ${isError ? 'error' : 'success'}">${msg}</div>`;
+        setTimeout(() => { el.innerHTML = ''; }, 4000);
+    }
+
+    function toggleAuthMode() {
+        isRegisterMode = !isRegisterMode;
+        document.getElementById('authTitle').textContent = isRegisterMode ? 'Register' : 'Login';
+        document.getElementById('authBtn').textContent = isRegisterMode ? 'Register' : 'Login';
+        document.getElementById('authToggle').innerHTML = isRegisterMode
+            ? 'Already have an account? <strong>Login</strong>'
+            : "Don't have an account? <strong>Register</strong>";
+    }
+
+    async function handleAuth() {
+        const u = document.getElementById('authUsername').value.trim();
+        const p = document.getElementById('authPassword').value;
+        if (!u || !p) { showAuthStatus('Fill in all fields', true); return; }
+
+        const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+        try {
+            const res = await fetch(API + endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: u, password: p })
+            });
+            const data = await res.json();
+            if (!res.ok) { showAuthStatus(data.detail || 'Error', true); return; }
+
+            token = data.access_token;
+            username = data.username;
+            localStorage.setItem('st_token', token);
+            localStorage.setItem('st_username', username);
+            showApp();
+        } catch (e) {
+            showAuthStatus('Network error', true);
         }
+    }
 
-        function showStatus(msg, type) {
-            const el = document.getElementById('statusMsg');
-            el.className = `status-msg ${type}`;
-            el.textContent = msg;
-            setTimeout(() => { el.textContent = ''; el.className = ''; }, 4000);
-        }
+    function logout() {
+        token = null;
+        username = null;
+        localStorage.removeItem('st_token');
+        localStorage.removeItem('st_username');
+        showAuth();
+    }
 
-        function updateTimerDisplay() {
-            if (!startTime) return;
-            const elapsed = Math.floor((Date.now() - startTime) / 1000);
-            document.getElementById('timerDisplay').textContent = formatTime(elapsed);
-        }
+    function showAuth() {
+        document.getElementById('authView').style.display = 'block';
+        document.getElementById('appView').style.display = 'none';
+    }
 
-        async function loadSubjects() {
-            try {
-                const res = await fetch(`${API}/subjects`, { headers: { 'X-User-Key': 'demo' } });
-                const data = await res.json();
-                const datalist = document.getElementById('subjectList');
-                datalist.innerHTML = '';
-                data.forEach(item => {
-                    const opt = document.createElement('option');
-                    opt.value = item.subject;
-                    datalist.appendChild(opt);
-                });
-            } catch (e) { /* ignore */ }
-        }
-
-        async function startSession() {
-            const subject = document.getElementById('subjectInput').value.trim();
-            if (!subject) {
-                showStatus('Please enter a subject name', 'error');
-                return;
-            }
-            try {
-                const res = await fetch(`${API}/sessions/start`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-User-Key': 'demo' },
-                    body: JSON.stringify({ subject: subject, user_key: 'demo' })
-                });
-                if (!res.ok) {
-                    const err = await res.text();
-                    console.error('Start failed:', res.status, err);
-                    showStatus('Failed to start session', 'error');
-                    return;
-                }
-                const data = await res.json();
-                currentSessionId = data.id;
-                startTime = Date.now();
-                document.getElementById('timerDisplay').classList.add('running');
-                document.getElementById('btnStart').disabled = true;
-                document.getElementById('btnStop').disabled = false;
-                document.getElementById('subjectInput').disabled = true;
-                timerInterval = setInterval(updateTimerDisplay, 1000);
-                showStatus('Started: ' + subject, 'success');
-            } catch (e) {
-                console.error('Start error:', e);
-                showStatus('Network error', 'error');
-            }
-        }
-
-        async function stopSession() {
-            if (!currentSessionId) return;
-            try {
-                const res = await fetch(`${API}/sessions/${currentSessionId}/stop`, {
-                    method: 'POST',
-                    headers: { 'X-User-Key': 'demo' }
-                });
-                if (!res.ok) {
-                    const err = await res.text();
-                    console.error('Stop failed:', res.status, err);
-                    showStatus('Failed to stop session', 'error');
-                    return;
-                }
-                const data = await res.json();
-                clearInterval(timerInterval);
-                timerInterval = null;
-                currentSessionId = null;
-                startTime = null;
-                document.getElementById('timerDisplay').textContent = '00:00:00';
-                document.getElementById('timerDisplay').classList.remove('running');
-                document.getElementById('btnStart').disabled = false;
-                document.getElementById('btnStop').disabled = true;
-                document.getElementById('subjectInput').disabled = false;
-                showStatus('Stopped. Duration: ' + data.duration_minutes.toFixed(1) + ' min', 'success');
-                loadStats();
-                loadSubjects();
-            } catch (e) {
-                console.error('Stop error:', e);
-                showStatus('Network error', 'error');
-            }
-        }
-
-        async function loadStats() {
-            try {
-                const res = await fetch(`${API}/stats/weekly`, { headers: { 'X-User-Key': 'demo' } });
-                if (!res.ok) { console.error('Stats API error', res.status); return; }
-                const data = await res.json();
-
-                const totalMin = data.total_minutes || 0;
-                const sessions = data.last_sessions || [];
-
-                document.getElementById('totalMinutes').textContent = Math.round(totalMin);
-                document.getElementById('totalHours').textContent = (totalMin / 60).toFixed(1);
-                document.getElementById('sessionCount').textContent = sessions.length;
-
-                // Day chart — stacked bar by subject
-                const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-                const COLORS = [
-                    '#4361ee','#e63946','#2ec4b6','#f77f00','#7209b7',
-                    '#06d6a0','#ef476f','#118ab2','#073b4c','#ff6b6b',
-                    '#5f27cd','#feca57','#48dbfb','#ff9ff3','#54a0ff',
-                ];
-                if (dayChart) { dayChart.destroy(); dayChart = null; }
-                const ctx = document.getElementById('dayChart').getContext('2d');
-
-                const byDayBySubject = data.by_day_by_subject || {};
-                const subjectNames = Object.keys(byDayBySubject);
-                const datasets = subjectNames.map((subj, i) => ({
-                    label: subj,
-                    data: byDayBySubject[subj] || [0,0,0,0,0,0,0],
-                    backgroundColor: COLORS[i % COLORS.length],
-                    borderRadius: 4,
-                }));
-
-                if (datasets.length === 0) {
-                    datasets.push({
-                        label: 'Minutes',
-                        data: data.by_day || [0,0,0,0,0,0,0],
-                        backgroundColor: '#4361ee',
-                        borderRadius: 6,
-                    });
-                }
-
-                dayChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: { labels: days, datasets: datasets },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                display: subjectNames.length > 1,
-                                position: 'top',
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `${context.dataset.label}: ${context.parsed.y.toFixed(1)} min`;
-                                    },
-                                    footer: function(items) {
-                                        if (subjectNames.length > 1) {
-                                            const total = items.reduce((sum, item) => sum + item.parsed.y, 0);
-                                            return `Total: ${total.toFixed(1)} min`;
-                                        }
-                                        return '';
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: { stacked: true },
-                            y: {
-                                stacked: true,
-                                beginAtZero: true,
-                                ticks: { stepSize: 15 }
-                            }
-                        }
-                    }
-                });
-
-                // Subject breakdown
-                const bySubject = data.by_subject || {};
-                const subjectEntries = Object.entries(bySubject);
-                const sbDiv = document.getElementById('subjectBreakdown');
-                const tbody = document.getElementById('subjectTableBody');
-                if (subjectEntries.length > 0) {
-                    sbDiv.style.display = 'block';
-                    tbody.innerHTML = subjectEntries
-                        .sort((a,b) => b[1] - a[1])
-                        .map(([subj, mins]) =>
-                            `<tr><td>${subj}</td><td>${Math.round(mins)}</td><td>${(mins/60).toFixed(1)}</td></tr>`
-                        ).join('');
-                } else {
-                    sbDiv.style.display = 'none';
-                }
-
-                // Recent sessions
-                const slDiv = document.getElementById('sessionsList');
-                const slContent = document.getElementById('sessionsListContent');
-                if (sessions.length > 0) {
-                    slDiv.style.display = 'block';
-                    slContent.innerHTML = sessions.map(s => {
-                        const startStr = new Date(s.start_time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-                        return `<div class="session-item">
-                            <span class="subj">${s.subject}</span>
-                            <span class="time">${startStr}</span>
-                            <span class="dur">${s.duration_minutes.toFixed(1)} min</span>
-                        </div>`;
-                    }).join('');
-                } else {
-                    slDiv.style.display = 'none';
-                }
-            } catch (e) {
-                console.error('loadStats error:', e);
-            }
-        }
-
-        function exportCSV() {
-            window.open(`${API}/export/csv?user_key=demo`, '_blank');
-        }
-
-        // Init
+    function showApp() {
+        document.getElementById('authView').style.display = 'none';
+        document.getElementById('appView').style.display = 'block';
+        document.getElementById('displayUsername').textContent = username;
         loadSubjects();
         loadStats();
-        // Refresh stats every 30s
-        setInterval(loadStats, 30000);
-    </script>
+    }
+
+    function authHeaders() {
+        return { 'Authorization': 'Bearer ' + token };
+    }
+
+    // --- Timer ---
+    function formatTime(totalSeconds) {
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    function showStatus(msg, isError) {
+        const el = document.getElementById('statusMsg');
+        el.className = `status-msg ${isError ? 'error' : 'success'}`;
+        el.textContent = msg;
+        setTimeout(() => { el.textContent = ''; el.className = ''; }, 4000);
+    }
+
+    function updateTimerDisplay() {
+        if (!startTime) return;
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById('timerDisplay').textContent = formatTime(elapsed);
+    }
+
+    async function loadSubjects() {
+        try {
+            const res = await fetch(API + '/subjects', { headers: authHeaders() });
+            if (!res.ok) return;
+            const data = await res.json();
+            const datalist = document.getElementById('subjectList');
+            datalist.innerHTML = '';
+            data.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.subject;
+                datalist.appendChild(opt);
+            });
+        } catch (e) {}
+    }
+
+    async function startSession() {
+        const subject = document.getElementById('subjectInput').value.trim();
+        if (!subject) { showStatus('Please enter a subject name', true); return; }
+        try {
+            const res = await fetch(API + '/sessions/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+                body: JSON.stringify({ subject: subject })
+            });
+            if (!res.ok) { showStatus('Failed to start session', true); return; }
+            const data = await res.json();
+            currentSessionId = data.id;
+            startTime = Date.now();
+            document.getElementById('timerDisplay').classList.add('running');
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnStop').disabled = false;
+            document.getElementById('subjectInput').disabled = true;
+            timerInterval = setInterval(updateTimerDisplay, 1000);
+            showStatus('Started: ' + subject, false);
+        } catch (e) {
+            showStatus('Network error', true);
+        }
+    }
+
+    async function stopSession() {
+        if (!currentSessionId) return;
+        try {
+            const res = await fetch(API + '/sessions/' + currentSessionId + '/stop', {
+                method: 'POST',
+                headers: authHeaders()
+            });
+            if (!res.ok) { showStatus('Failed to stop session', true); return; }
+            const data = await res.json();
+            clearInterval(timerInterval);
+            timerInterval = null;
+            currentSessionId = null;
+            startTime = null;
+            document.getElementById('timerDisplay').textContent = '00:00:00';
+            document.getElementById('timerDisplay').classList.remove('running');
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('btnStop').disabled = true;
+            document.getElementById('subjectInput').disabled = false;
+            showStatus('Stopped. Duration: ' + data.duration_minutes.toFixed(1) + ' min', false);
+            loadStats();
+            loadSubjects();
+        } catch (e) {
+            showStatus('Network error', true);
+        }
+    }
+
+    // --- Stats ---
+    async function loadStats() {
+        try {
+            const res = await fetch(API + '/stats/weekly', { headers: authHeaders() });
+            if (!res.ok) return;
+            const data = await res.json();
+
+            const totalMin = data.total_minutes || 0;
+            const sessions = data.last_sessions || [];
+
+            document.getElementById('totalMinutes').textContent = Math.round(totalMin);
+            document.getElementById('totalHours').textContent = (totalMin / 60).toFixed(1);
+            document.getElementById('sessionCount').textContent = sessions.length;
+
+            const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+            const COLORS = [
+                '#4361ee','#e63946','#2ec4b6','#f77f00','#7209b7',
+                '#06d6a0','#ef476f','#118ab2','#073b4c','#ff6b6b',
+                '#5f27cd','#feca57','#48dbfb','#ff9ff3','#54a0ff',
+            ];
+            if (dayChart) { dayChart.destroy(); dayChart = null; }
+            const ctx = document.getElementById('dayChart').getContext('2d');
+
+            const byDayBySubject = data.by_day_by_subject || {};
+            const subjectNames = Object.keys(byDayBySubject);
+            const datasets = subjectNames.map((subj, i) => ({
+                label: subj,
+                data: byDayBySubject[subj] || [0,0,0,0,0,0,0],
+                backgroundColor: COLORS[i % COLORS.length],
+                borderRadius: 4,
+            }));
+
+            if (datasets.length === 0) {
+                datasets.push({
+                    label: 'Minutes',
+                    data: data.by_day || [0,0,0,0,0,0,0],
+                    backgroundColor: '#4361ee',
+                    borderRadius: 6,
+                });
+            }
+
+            dayChart = new Chart(ctx, {
+                type: 'bar',
+                data: { labels: days, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: subjectNames.length > 1, position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' min';
+                                },
+                                footer: function(items) {
+                                    if (subjectNames.length > 1) {
+                                        const total = items.reduce((sum, item) => sum + item.parsed.y, 0);
+                                        return 'Total: ' + total.toFixed(1) + ' min';
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true, ticks: { stepSize: 15 } }
+                    }
+                }
+            });
+
+            const bySubject = data.by_subject || {};
+            const subjectEntries = Object.entries(bySubject);
+            const sbDiv = document.getElementById('subjectBreakdown');
+            const tbody = document.getElementById('subjectTableBody');
+            if (subjectEntries.length > 0) {
+                sbDiv.style.display = 'block';
+                tbody.innerHTML = subjectEntries
+                    .sort((a,b) => b[1] - a[1])
+                    .map(([subj, mins]) =>
+                        '<tr><td>' + subj + '</td><td>' + Math.round(mins) + '</td><td>' + (mins/60).toFixed(1) + '</td></tr>'
+                    ).join('');
+            } else {
+                sbDiv.style.display = 'none';
+            }
+
+            const slDiv = document.getElementById('sessionsList');
+            const slContent = document.getElementById('sessionsListContent');
+            if (sessions.length > 0) {
+                slDiv.style.display = 'block';
+                slContent.innerHTML = sessions.map(s => {
+                    const startStr = new Date(s.start_time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+                    return '<div class="session-item">' +
+                        '<span class="subj">' + s.subject + '</span>' +
+                        '<span class="time">' + startStr + '</span>' +
+                        '<span class="dur">' + s.duration_minutes.toFixed(1) + ' min</span>' +
+                        '<span class="session-actions">' +
+                            '<button class="btn-edit" onclick="openEditModal(' + s.id + ')">Edit</button>' +
+                            '<button class="btn-del" onclick="deleteSession(' + s.id + ')">Delete</button>' +
+                        '</span>' +
+                    '</div>';
+                }).join('');
+            } else {
+                slDiv.style.display = 'none';
+            }
+        } catch (e) {
+            console.error('loadStats error:', e);
+        }
+    }
+
+    // --- Edit / Delete ---
+    function openEditModal(sessionId) {
+        editingSessionId = sessionId;
+        // Find session data from the list
+        fetch(API + '/sessions', { headers: authHeaders() })
+            .then(r => r.json())
+            .then(sessions => {
+                const s = sessions.find(x => x.id === sessionId);
+                if (!s) return;
+                document.getElementById('editSubject').value = s.subject;
+                // Format for datetime-local
+                const fmt = (d) => {
+                    const dt = new Date(d);
+                    const off = dt.getTimezoneOffset();
+                    const local = new Date(dt.getTime() - off * 60000);
+                    return local.toISOString().slice(0, 16);
+                };
+                document.getElementById('editStartTime').value = fmt(s.start_time);
+                document.getElementById('editEndTime').value = s.end_time ? fmt(s.end_time) : '';
+                document.getElementById('editModal').classList.add('active');
+            });
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').classList.remove('active');
+        editingSessionId = null;
+    }
+
+    async function saveEdit() {
+        if (!editingSessionId) return;
+        const subject = document.getElementById('editSubject').value.trim();
+        const startVal = document.getElementById('editStartTime').value;
+        const endVal = document.getElementById('editEndTime').value;
+
+        const body = {};
+        if (subject) body.subject = subject;
+        if (startVal) body.start_time = new Date(startVal).toISOString();
+        if (endVal) body.end_time = new Date(endVal).toISOString();
+
+        try {
+            const res = await fetch(API + '/sessions/' + editingSessionId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', ...authHeaders() },
+                body: JSON.stringify(body)
+            });
+            if (!res.ok) { showStatus('Failed to update', true); return; }
+            closeEditModal();
+            showStatus('Session updated', false);
+            loadStats();
+            loadSubjects();
+        } catch (e) {
+            showStatus('Network error', true);
+        }
+    }
+
+    async function deleteSession(sessionId) {
+        if (!confirm('Delete this session?')) return;
+        try {
+            const res = await fetch(API + '/sessions/' + sessionId, {
+                method: 'DELETE',
+                headers: authHeaders()
+            });
+            if (!res.ok) { showStatus('Failed to delete', true); return; }
+            showStatus('Session deleted', false);
+            loadStats();
+            loadSubjects();
+        } catch (e) {
+            showStatus('Network error', true);
+        }
+    }
+
+    function exportCSV() {
+        const a = document.createElement('a');
+        a.href = API + '/export/csv';
+        a.click();
+    }
+
+    // --- Init ---
+    if (token && username) {
+        showApp();
+    } else {
+        showAuth();
+    }
+    setInterval(loadStats, 30000);
+</script>
 </body>
 </html>
