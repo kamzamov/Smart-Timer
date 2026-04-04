@@ -253,7 +253,8 @@
     <div class="auth-container">
         <h2 id="authTitle">Login</h2>
         <input type="text" id="authUsername" placeholder="Username" autocomplete="username" />
-        <input type="password" id="authPassword" placeholder="Password" autocomplete="current-password" />
+        <input type="password" id="authPassword" placeholder="Password" autocomplete="new-password" />
+        <input type="password" id="authConfirmPassword" placeholder="Confirm Password" autocomplete="new-password" style="display:none;" />
         <button class="btn" id="authBtn" onclick="handleAuth()">Login</button>
         <div class="auth-toggle" id="authToggle" onclick="toggleAuthMode()">
             Don't have an account? <strong>Register</strong>
@@ -336,10 +337,14 @@
     <div class="modal">
         <h3>Edit Session</h3>
         <input type="text" id="editSubject" placeholder="Subject" />
-        <label style="font-size:0.85rem;color:#666;">Start time</label>
-        <input type="datetime-local" id="editStartTime" />
-        <label style="font-size:0.85rem;color:#666;">End time</label>
-        <input type="datetime-local" id="editEndTime" />
+        <label style="font-size:0.85rem;color:#666;">Duration</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" id="editHours" placeholder="Hours" min="0" style="flex:1;" />
+            <span style="font-size:1.1rem;color:#666;">h</span>
+            <input type="number" id="editMinutes" placeholder="Minutes" min="0" style="flex:1;" />
+            <span style="font-size:1.1rem;color:#666;">m</span>
+        </div>
+        <div id="editDurationInfo" style="font-size:0.8rem;color:#888;margin-bottom:8px;"></div>
         <div class="modal-btns">
             <button class="modal-cancel" onclick="closeEditModal()">Cancel</button>
             <button class="modal-save" onclick="saveEdit()">Save</button>
@@ -372,6 +377,8 @@
         document.getElementById('authToggle').innerHTML = isRegisterMode
             ? 'Already have an account? <strong>Login</strong>'
             : "Don't have an account? <strong>Register</strong>";
+        document.getElementById('authConfirmPassword').style.display = isRegisterMode ? 'block' : 'none';
+        document.getElementById('authPassword').placeholder = isRegisterMode ? 'Password' : 'Password';
     }
 
     async function handleAuth() {
@@ -379,7 +386,12 @@
         const p = document.getElementById('authPassword').value;
         if (!u || !p) { showAuthStatus('Fill in all fields', true); return; }
 
-        const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+        if (isRegisterMode) {
+            const cp = document.getElementById('authConfirmPassword').value;
+            if (p !== cp) { showAuthStatus('Passwords do not match', true); return; }
+        }
+
+        const endpoint = isRegisterMode ? '/auth/register' : '/auth/login';
         try {
             const res = await fetch(API + endpoint, {
                 method: 'POST',
@@ -623,22 +635,18 @@
     // --- Edit / Delete ---
     function openEditModal(sessionId) {
         editingSessionId = sessionId;
-        // Find session data from the list
         fetch(API + '/sessions', { headers: authHeaders() })
             .then(r => r.json())
             .then(sessions => {
-                const s = sessions.find(x => x.id === sessionId);
+                const s = sessions.find(function(x) { return x.id === sessionId; });
                 if (!s) return;
                 document.getElementById('editSubject').value = s.subject;
-                // Format for datetime-local
-                const fmt = (d) => {
-                    const dt = new Date(d);
-                    const off = dt.getTimezoneOffset();
-                    const local = new Date(dt.getTime() - off * 60000);
-                    return local.toISOString().slice(0, 16);
-                };
-                document.getElementById('editStartTime').value = fmt(s.start_time);
-                document.getElementById('editEndTime').value = s.end_time ? fmt(s.end_time) : '';
+                var totalMin = s.duration_minutes || 0;
+                var h = Math.floor(totalMin / 60);
+                var m = Math.round(totalMin % 60);
+                document.getElementById('editHours').value = h > 0 ? h : '';
+                document.getElementById('editMinutes').value = m > 0 ? m : '';
+                document.getElementById('editDurationInfo').textContent = 'Current: ' + s.duration_minutes.toFixed(1) + ' min';
                 document.getElementById('editModal').classList.add('active');
             });
     }
@@ -650,29 +658,56 @@
 
     async function saveEdit() {
         if (!editingSessionId) return;
-        const subject = document.getElementById('editSubject').value.trim();
-        const startVal = document.getElementById('editStartTime').value;
-        const endVal = document.getElementById('editEndTime').value;
+        var subject = document.getElementById('editSubject').value.trim();
+        var hours = parseInt(document.getElementById('editHours').value) || 0;
+        var minutes = parseInt(document.getElementById('editMinutes').value) || 0;
 
-        const body = {};
-        if (subject) body.subject = subject;
-        if (startVal) body.start_time = new Date(startVal).toISOString();
-        if (endVal) body.end_time = new Date(endVal).toISOString();
-
-        try {
-            const res = await fetch(API + '/sessions/' + editingSessionId, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json', ...authHeaders() },
-                body: JSON.stringify(body)
-            });
-            if (!res.ok) { showStatus('Failed to update', true); return; }
-            closeEditModal();
-            showStatus('Session updated', false);
-            loadStats();
-            loadSubjects();
-        } catch (e) {
-            showStatus('Network error', true);
+        if (hours < 0 || minutes < 0) {
+            showStatus('Hours and minutes must be positive', true);
+            return;
         }
+        if (hours === 0 && minutes === 0) {
+            showStatus('Enter at least 1 minute', true);
+            return;
+        }
+        if (minutes > 59) {
+            showStatus('Minutes must be 0-59', true);
+            return;
+        }
+
+        var body = {};
+        if (subject) body.subject = subject;
+
+        // Calculate new end_time based on duration, keeping the original start_time
+        fetch(API + '/sessions', { headers: authHeaders() })
+            .then(function(r) { return r.json(); })
+            .then(function(sessions) {
+                var s = sessions.find(function(x) { return x.id === editingSessionId; });
+                if (!s) { showStatus('Session not found', true); return; }
+
+                var startMs = new Date(s.start_time).getTime();
+                var totalMs = (hours * 60 + minutes) * 60 * 1000;
+                var endMs = startMs + totalMs;
+                body.start_time = new Date(startMs).toISOString();
+                body.end_time = new Date(endMs).toISOString();
+
+                return fetch(API + '/sessions/' + editingSessionId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+            })
+            .then(function(res) {
+                if (!res) return;
+                if (!res.ok) { showStatus('Failed to update', true); return; }
+                closeEditModal();
+                showStatus('Session updated', false);
+                loadStats();
+                loadSubjects();
+            })
+            .catch(function(e) {
+                showStatus('Network error', true);
+            });
     }
 
     async function deleteSession(sessionId) {
