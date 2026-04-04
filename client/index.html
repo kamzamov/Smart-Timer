@@ -329,10 +329,22 @@
 
             <button class="export-btn" onclick="exportCSV()">📥 Export CSV</button>
         </div>
+
+        <!-- Notes -->
+        <div class="card">
+            <h2>📝 Study Notes</h2>
+            <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+                <input type="text" id="noteContent" placeholder="Write a note..." style="flex:1;min-width:200px;padding:10px 14px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;" />
+                <input type="datetime-local" id="noteTime" style="padding:10px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;" />
+                <button onclick="addNote()" style="padding:10px 20px;background:#4361ee;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95rem;">Add</button>
+            </div>
+            <div id="notesList"></div>
+        </div>
     </div>
 </div>
 
 <!-- Edit Modal -->
+<!-- Edit Session Modal -->
 <div class="modal-overlay" id="editModal">
     <div class="modal">
         <h3>Edit Session</h3>
@@ -344,10 +356,27 @@
             <input type="number" id="editMinutes" placeholder="Minutes" min="0" style="flex:1;" />
             <span style="font-size:1.1rem;color:#666;">m</span>
         </div>
+        <label style="font-size:0.85rem;color:#666;">Start date & time</label>
+        <input type="datetime-local" id="editStartDt" />
         <div id="editDurationInfo" style="font-size:0.8rem;color:#888;margin-bottom:8px;"></div>
         <div class="modal-btns">
             <button class="modal-cancel" onclick="closeEditModal()">Cancel</button>
             <button class="modal-save" onclick="saveEdit()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Note Modal -->
+<div class="modal-overlay" id="editNoteModal">
+    <div class="modal">
+        <h3>Edit Note</h3>
+        <input type="text" id="editNoteContent" placeholder="Note content" />
+        <label style="font-size:0.85rem;color:#666;">Date & time</label>
+        <input type="datetime-local" id="editNoteTime" />
+        <div id="editNoteError" style="font-size:0.8rem;color:#e63946;margin-bottom:8px;"></div>
+        <div class="modal-btns">
+            <button class="modal-cancel" onclick="closeEditNoteModal()">Cancel</button>
+            <button class="modal-save" onclick="saveEditNote()">Save</button>
         </div>
     </div>
 </div>
@@ -430,6 +459,7 @@
         document.getElementById('displayUsername').textContent = username;
         loadSubjects();
         loadStats();
+        loadNotes();
     }
 
     function authHeaders() {
@@ -636,9 +666,9 @@
     function openEditModal(sessionId) {
         editingSessionId = sessionId;
         fetch(API + '/sessions', { headers: authHeaders() })
-            .then(r => r.json())
-            .then(sessions => {
-                const s = sessions.find(function(x) { return x.id === sessionId; });
+            .then(function(r) { return r.json(); })
+            .then(function(sessions) {
+                var s = sessions.find(function(x) { return x.id === sessionId; });
                 if (!s) return;
                 document.getElementById('editSubject').value = s.subject;
                 var totalMin = s.duration_minutes || 0;
@@ -646,6 +676,7 @@
                 var m = Math.round(totalMin % 60);
                 document.getElementById('editHours').value = h > 0 ? h : '';
                 document.getElementById('editMinutes').value = m > 0 ? m : '';
+                document.getElementById('editStartDt').value = fmtLocal(s.start_time);
                 document.getElementById('editDurationInfo').textContent = 'Current: ' + s.duration_minutes.toFixed(1) + ' min';
                 document.getElementById('editModal').classList.add('active');
             });
@@ -678,14 +709,22 @@
         var body = {};
         if (subject) body.subject = subject;
 
-        // Calculate new end_time based on duration, keeping the original start_time
+        // Calculate new end_time based on duration and optional start date
         fetch(API + '/sessions', { headers: authHeaders() })
             .then(function(r) { return r.json(); })
             .then(function(sessions) {
                 var s = sessions.find(function(x) { return x.id === editingSessionId; });
                 if (!s) { showStatus('Session not found', true); return; }
 
-                var startMs = new Date(s.start_time).getTime();
+                var startMs;
+                var startDt = document.getElementById('editStartDt').value;
+                if (startDt) {
+                    var dt = new Date(startDt);
+                    if (isNaN(dt.getTime())) { showStatus('Invalid start date', true); return; }
+                    startMs = dt.getTime();
+                } else {
+                    startMs = new Date(s.start_time).getTime();
+                }
                 var totalMs = (hours * 60 + minutes) * 60 * 1000;
                 var endMs = startMs + totalMs;
                 body.start_time = new Date(startMs).toISOString();
@@ -693,7 +732,7 @@
 
                 return fetch(API + '/sessions/' + editingSessionId, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 'Content-Type': 'application/json', ...authHeaders() },
                     body: JSON.stringify(body)
                 });
             })
@@ -732,6 +771,130 @@
         a.click();
     }
 
+    // --- Notes ---
+    function fmtLocal(dt) {
+        var d = new Date(dt);
+        var off = d.getTimezoneOffset();
+        var local = new Date(d.getTime() - off * 60000);
+        return local.toISOString().slice(0, 16);
+    }
+
+    function addNote() {
+        var content = document.getElementById('noteContent').value.trim();
+        if (!content) { showStatus('Write something', true); return; }
+        var body = { content: content };
+        var nt = document.getElementById('noteTime').value;
+        if (nt) {
+            var dt = new Date(nt);
+            if (isNaN(dt.getTime())) { showStatus('Invalid date', true); return; }
+            body.note_time = dt.toISOString();
+        }
+        fetch(API + '/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            document.getElementById('noteContent').value = '';
+            document.getElementById('noteTime').value = '';
+            showStatus('Note added', false);
+            loadNotes();
+        })
+        .catch(function() { showStatus('Failed to add note', true); });
+    }
+
+    function loadNotes() {
+        fetch(API + '/notes', { headers: authHeaders() })
+            .then(function(r) { return r.json(); })
+            .then(function(notes) {
+                var el = document.getElementById('notesList');
+                if (!notes || notes.length === 0) {
+                    el.innerHTML = '<p style="color:#888;font-size:0.9rem;">No notes yet.</p>';
+                    return;
+                }
+                el.innerHTML = notes.map(function(n) {
+                    var dt = new Date(n.note_time);
+                    var dateStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+                    return '<div class="session-item">' +
+                        '<span class="subj" style="flex:2;">' + n.content + '</span>' +
+                        '<span class="time">' + dateStr + '</span>' +
+                        '<span class="session-actions">' +
+                            '<button class="btn-edit" onclick="openEditNoteModal(' + n.id + ')">Edit</button>' +
+                            '<button class="btn-del" onclick="deleteNote(' + n.id + ')">Delete</button>' +
+                        '</span>' +
+                    '</div>';
+                }).join('');
+            })
+            .catch(function() {});
+    }
+
+    var editingNoteId = null;
+
+    function openEditNoteModal(noteId) {
+        editingNoteId = noteId;
+        fetch(API + '/notes', { headers: authHeaders() })
+            .then(function(r) { return r.json(); })
+            .then(function(notes) {
+                var n = notes.find(function(x) { return x.id === noteId; });
+                if (!n) return;
+                document.getElementById('editNoteContent').value = n.content;
+                document.getElementById('editNoteTime').value = fmtLocal(n.note_time);
+                document.getElementById('editNoteError').textContent = '';
+                document.getElementById('editNoteModal').classList.add('active');
+            });
+    }
+
+    function closeEditNoteModal() {
+        document.getElementById('editNoteModal').classList.remove('active');
+        editingNoteId = null;
+    }
+
+    function saveEditNote() {
+        if (!editingNoteId) return;
+        var content = document.getElementById('editNoteContent').value.trim();
+        var nt = document.getElementById('editNoteTime').value;
+        if (!content) {
+            document.getElementById('editNoteError').textContent = 'Content is required';
+            return;
+        }
+        var body = { content: content };
+        if (nt) {
+            var dt = new Date(nt);
+            if (isNaN(dt.getTime())) {
+                document.getElementById('editNoteError').textContent = 'Invalid date/time';
+                return;
+            }
+            body.note_time = dt.toISOString();
+        }
+        fetch(API + '/notes/' + editingNoteId, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body: JSON.stringify(body)
+        })
+        .then(function(r) {
+            if (!r.ok) { showStatus('Failed to update note', true); return; }
+            closeEditNoteModal();
+            showStatus('Note updated', false);
+            loadNotes();
+        })
+        .catch(function() { showStatus('Network error', true); });
+    }
+
+    function deleteNote(noteId) {
+        if (!confirm('Delete this note?')) return;
+        fetch(API + '/notes/' + noteId, {
+            method: 'DELETE',
+            headers: authHeaders()
+        })
+        .then(function(r) {
+            if (!r.ok) { showStatus('Failed to delete note', true); return; }
+            showStatus('Note deleted', false);
+            loadNotes();
+        })
+        .catch(function() { showStatus('Network error', true); });
+    }
+
     // --- Init ---
     if (token && username) {
         showApp();
@@ -739,6 +902,7 @@
         showAuth();
     }
     setInterval(loadStats, 30000);
+    setInterval(loadNotes, 30000);
 </script>
 </body>
 </html>

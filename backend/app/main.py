@@ -12,7 +12,7 @@ import io
 import os
 
 from app.database import get_db, init_db
-from app.models import StudySession, User
+from app.models import StudySession, User, Note
 from app.schemas import (
     UserRegister,
     UserLogin,
@@ -23,6 +23,9 @@ from app.schemas import (
     WeeklyStats,
     LastSession,
     SubjectItem,
+    NoteCreate,
+    NoteResponse,
+    NoteEdit,
 )
 
 SECRET_KEY = os.getenv("JWT_SECRET", "smart-timer-secret-key-change-in-prod")
@@ -334,3 +337,75 @@ async def export_csv(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=sessions.csv"},
     )
+
+
+# --- Notes endpoints ---
+@app.post("/api/notes", response_model=NoteResponse)
+async def create_note(
+    data: NoteCreate,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    nt = data.note_time or datetime.now(timezone.utc)
+    note = Note(content=data.content.strip(), note_time=nt, user_id=user.id)
+    db.add(note)
+    await db.commit()
+    await db.refresh(note)
+    return NoteResponse(id=note.id, content=note.content, note_time=note.note_time)
+
+
+@app.get("/api/notes", response_model=list[NoteResponse])
+async def list_notes(
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(Note)
+        .where(Note.user_id == user.id)
+        .order_by(Note.note_time.desc())
+        .limit(100)
+    )
+    notes = result.scalars().all()
+    return [NoteResponse(id=n.id, content=n.content, note_time=n.note_time) for n in notes]
+
+
+@app.put("/api/notes/{note_id}", response_model=NoteResponse)
+async def edit_note(
+    note_id: int,
+    data: NoteEdit,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = await db.execute(select(Note).where(Note.id == note_id))
+    note = result.scalar_one_or_none()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    if note.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Not your note")
+
+    if data.content is not None:
+        note.content = data.content.strip()
+    if data.note_time is not None:
+        note.note_time = data.note_time
+
+    await db.commit()
+    await db.refresh(note)
+    return NoteResponse(id=note.id, content=note.content, note_time=note.note_time)
+
+
+@app.delete("/api/notes/{note_id}")
+async def delete_note(
+    note_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = await db.execute(select(Note).where(Note.id == note_id))
+    note = result.scalar_one_or_none()
+    if not note:
+        raise HTTPException(status_code=404, detail="Note not found")
+    if note.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Not your note")
+
+    await db.delete(note)
+    await db.commit()
+    return {"detail": "Note deleted"}

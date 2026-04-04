@@ -60,3 +60,22 @@ class WeeklyStats(BaseModel):
 
 class SubjectItem(BaseModel):
     subject: str
+
+
+# --- Notes ---
+class NoteCreate(BaseModel):
+    content: str
+    note_time: Optional[datetime] = None
+
+
+class NoteResponse(BaseModel):
+    id: int
+    content: str
+    note_time: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class NoteEdit(BaseModel):
+    content: Optional[str] = None
+    note_time: Optional[datetime] = None
