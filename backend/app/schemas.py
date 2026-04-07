@@ -66,12 +66,15 @@ class SubjectItem(BaseModel):
 class NoteCreate(BaseModel):
     content: str
     note_time: Optional[datetime] = None
+    duration_hours: int = 0
+    duration_minutes: int = 0
 
 
 class NoteResponse(BaseModel):
     id: int
     content: str
     note_time: datetime
+    duration_minutes: int
 
     model_config = {"from_attributes": True}
 
@@ -79,3 +82,5 @@ class NoteResponse(BaseModel):
 class NoteEdit(BaseModel):
     content: Optional[str] = None
     note_time: Optional[datetime] = None
+    duration_hours: Optional[int] = None
+    duration_minutes: Optional[int] = None

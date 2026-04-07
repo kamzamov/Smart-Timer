@@ -333,9 +333,23 @@
         <!-- Notes -->
         <div class="card">
             <h2>📝 Study Notes</h2>
-            <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-                <input type="text" id="noteContent" placeholder="Write a note..." style="flex:1;min-width:200px;padding:10px 14px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;" />
-                <input type="datetime-local" id="noteTime" style="padding:10px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;" />
+            <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
+                <div style="flex:2;min-width:200px;">
+                    <input type="text" id="noteContent" placeholder="Write a note..." style="width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;" />
+                </div>
+                <div style="flex:1;min-width:140px;">
+                    <label style="font-size:0.8rem;color:#666;">Date</label>
+                    <input type="date" id="noteDate" style="width:100%;padding:10px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;" />
+                </div>
+                <div style="flex:1.5;min-width:180px;">
+                    <label style="font-size:0.8rem;color:#666;">Duration</label>
+                    <div style="display:flex;gap:4px;align-items:center;">
+                        <input type="number" id="noteHours" placeholder="h" min="0" style="width:50px;padding:10px 8px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;text-align:center;" />
+                        <span style="color:#666;">h</span>
+                        <input type="number" id="noteMinutes" placeholder="m" min="0" max="59" style="width:50px;padding:10px 8px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;text-align:center;" />
+                        <span style="color:#666;">m</span>
+                    </div>
+                </div>
                 <button onclick="addNote()" style="padding:10px 20px;background:#4361ee;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95rem;">Add</button>
             </div>
             <div id="notesList"></div>
@@ -371,9 +385,16 @@
     <div class="modal">
         <h3>Edit Note</h3>
         <input type="text" id="editNoteContent" placeholder="Note content" />
-        <label style="font-size:0.85rem;color:#666;">Date & time</label>
-        <input type="datetime-local" id="editNoteTime" />
-        <div id="editNoteError" style="font-size:0.8rem;color:#e63946;margin-bottom:8px;"></div>
+        <label style="font-size:0.85rem;color:#666;">Date</label>
+        <input type="date" id="editNoteDate" />
+        <label style="font-size:0.85rem;color:#666;">Duration</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <input type="number" id="editNoteHours" placeholder="Hours" min="0" style="flex:1;" />
+            <span style="color:#666;">h</span>
+            <input type="number" id="editNoteMinutes" placeholder="Minutes" min="0" max="59" style="flex:1;" />
+            <span style="color:#666;">m</span>
+        </div>
+        <div id="editNoteError" style="font-size:0.8rem;color:#e63946;margin-bottom:8px;margin-top:4px;"></div>
         <div class="modal-btns">
             <button class="modal-cancel" onclick="closeEditNoteModal()">Cancel</button>
             <button class="modal-save" onclick="saveEditNote()">Save</button>
@@ -782,11 +803,20 @@
     function addNote() {
         var content = document.getElementById('noteContent').value.trim();
         if (!content) { showStatus('Write something', true); return; }
-        var body = { content: content };
-        var nt = document.getElementById('noteTime').value;
-        if (nt) {
-            var dt = new Date(nt);
+
+        var hours = parseInt(document.getElementById('noteHours').value) || 0;
+        var minutes = parseInt(document.getElementById('noteMinutes').value) || 0;
+
+        if (hours < 0 || minutes < 0) { showStatus('Duration must be positive', true); return; }
+        if (hours === 0 && minutes === 0) { showStatus('Enter at least 1 minute', true); return; }
+        if (minutes > 59) { showStatus('Minutes must be 0-59', true); return; }
+
+        var body = { content: content, duration_hours: hours, duration_minutes: minutes };
+        var nd = document.getElementById('noteDate').value;
+        if (nd) {
+            var dt = new Date(nd + 'T00:00:00');
             if (isNaN(dt.getTime())) { showStatus('Invalid date', true); return; }
+            if (dt > new Date()) { showStatus('Cannot add notes for future dates', true); return; }
             body.note_time = dt.toISOString();
         }
         fetch(API + '/notes', {
@@ -794,14 +824,19 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         })
-        .then(function(r) { return r.json(); })
+        .then(function(r) {
+            if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail || 'Error'); });
+            return r.json();
+        })
         .then(function(data) {
             document.getElementById('noteContent').value = '';
-            document.getElementById('noteTime').value = '';
+            document.getElementById('noteHours').value = '';
+            document.getElementById('noteMinutes').value = '';
+            document.getElementById('noteDate').value = '';
             showStatus('Note added', false);
             loadNotes();
         })
-        .catch(function() { showStatus('Failed to add note', true); });
+        .catch(function(e) { showStatus(e.message || 'Failed to add note', true); });
     }
 
     function loadNotes() {
@@ -815,10 +850,18 @@
                 }
                 el.innerHTML = notes.map(function(n) {
                     var dt = new Date(n.note_time);
-                    var dateStr = dt.toLocaleDateString() + ' ' + dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+                    var dateStr = dt.toLocaleDateString();
+                    var durStr = '';
+                    var dm = n.duration_minutes || 0;
+                    if (dm > 0) {
+                        var dh = Math.floor(dm / 60);
+                        var dmRem = dm % 60;
+                        durStr = (dh > 0 ? dh + 'h ' : '') + dmRem + 'm';
+                    }
                     return '<div class="session-item">' +
                         '<span class="subj" style="flex:2;">' + n.content + '</span>' +
                         '<span class="time">' + dateStr + '</span>' +
+                        (durStr ? '<span class="dur">' + durStr + '</span>' : '') +
                         '<span class="session-actions">' +
                             '<button class="btn-edit" onclick="openEditNoteModal(' + n.id + ')">Edit</button>' +
                             '<button class="btn-del" onclick="deleteNote(' + n.id + ')">Delete</button>' +
@@ -839,7 +882,11 @@
                 var n = notes.find(function(x) { return x.id === noteId; });
                 if (!n) return;
                 document.getElementById('editNoteContent').value = n.content;
-                document.getElementById('editNoteTime').value = fmtLocal(n.note_time);
+                var nd = new Date(n.note_time);
+                document.getElementById('editNoteDate').value = nd.toISOString().slice(0, 10);
+                var dm = n.duration_minutes || 0;
+                document.getElementById('editNoteHours').value = Math.floor(dm / 60);
+                document.getElementById('editNoteMinutes').value = dm % 60;
                 document.getElementById('editNoteError').textContent = '';
                 document.getElementById('editNoteModal').classList.add('active');
             });
@@ -853,16 +900,32 @@
     function saveEditNote() {
         if (!editingNoteId) return;
         var content = document.getElementById('editNoteContent').value.trim();
-        var nt = document.getElementById('editNoteTime').value;
+        var nd = document.getElementById('editNoteDate').value;
+        var hours = parseInt(document.getElementById('editNoteHours').value) || 0;
+        var minutes = parseInt(document.getElementById('editNoteMinutes').value) || 0;
+
         if (!content) {
             document.getElementById('editNoteError').textContent = 'Content is required';
             return;
         }
-        var body = { content: content };
-        if (nt) {
-            var dt = new Date(nt);
+        if (hours < 0 || minutes < 0) {
+            document.getElementById('editNoteError').textContent = 'Duration must be positive';
+            return;
+        }
+        if (minutes > 59) {
+            document.getElementById('editNoteError').textContent = 'Minutes must be 0-59';
+            return;
+        }
+
+        var body = { content: content, duration_hours: hours, duration_minutes: minutes };
+        if (nd) {
+            var dt = new Date(nd + 'T00:00:00');
             if (isNaN(dt.getTime())) {
-                document.getElementById('editNoteError').textContent = 'Invalid date/time';
+                document.getElementById('editNoteError').textContent = 'Invalid date';
+                return;
+            }
+            if (dt > new Date()) {
+                document.getElementById('editNoteError').textContent = 'Cannot set future date';
                 return;
             }
             body.note_time = dt.toISOString();
@@ -873,12 +936,17 @@
             body: JSON.stringify(body)
         })
         .then(function(r) {
-            if (!r.ok) { showStatus('Failed to update note', true); return; }
+            if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail || 'Error'); });
+            return r.json();
+        })
+        .then(function(data) {
             closeEditNoteModal();
             showStatus('Note updated', false);
             loadNotes();
         })
-        .catch(function() { showStatus('Network error', true); });
+        .catch(function(e) {
+            document.getElementById('editNoteError').textContent = e.message || 'Failed to update';
+        });
     }
 
     function deleteNote(noteId) {

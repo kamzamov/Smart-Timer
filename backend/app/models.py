@@ -27,4 +27,5 @@ class Note(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     content = Column(Text, nullable=False)
     note_time = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    duration_minutes = Column(Integer, nullable=False, server_default="0")
     user_id = Column(Integer, nullable=False, index=True)

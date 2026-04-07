@@ -259,6 +259,42 @@ async def weekly_stats(
             )
         )
 
+    # Add notes to stats
+    notes_result = await db.execute(
+        select(Note)
+        .where(Note.user_id == user.id)
+        .where(Note.note_time >= monday)
+        .order_by(Note.note_time.desc())
+    )
+    notes = notes_result.scalars().all()
+
+    for n in notes:
+        dur = float(n.duration_minutes)
+        total_minutes += dur
+        day_idx = n.note_time.weekday()
+        by_day[day_idx] += dur
+
+        subject_label = "📝 " + n.content[:30]
+        if subject_label not in by_day_by_subject:
+            by_day_by_subject[subject_label] = [0.0] * 7
+        by_day_by_subject[subject_label][day_idx] += dur
+
+        # For by_subject tracking
+        by_subject[subject_label] = by_subject.get(subject_label, 0.0) + dur
+
+        last_sessions.append(
+            LastSession(
+                id=n.id,
+                subject="Note: " + n.content,
+                start_time=n.note_time,
+                end_time=n.note_time,
+                duration_minutes=round(dur, 2),
+            )
+        )
+
+    # Sort all by time desc
+    last_sessions.sort(key=lambda x: x.start_time, reverse=True)
+
     return WeeklyStats(
         total_minutes=round(total_minutes, 2),
         by_subject=by_subject,
@@ -346,12 +382,21 @@ async def create_note(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    if data.duration_hours < 0 or data.duration_minutes < 0:
+        raise HTTPException(status_code=400, detail="Duration must be positive")
+    if data.duration_minutes > 59:
+        raise HTTPException(status_code=400, detail="Minutes must be 0-59")
+
     nt = data.note_time or datetime.now(timezone.utc)
-    note = Note(content=data.content.strip(), note_time=nt, user_id=user.id)
+    if nt > datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Cannot create notes for future dates")
+
+    total_min = data.duration_hours * 60 + data.duration_minutes
+    note = Note(content=data.content.strip(), note_time=nt, duration_minutes=total_min, user_id=user.id)
     db.add(note)
     await db.commit()
     await db.refresh(note)
-    return NoteResponse(id=note.id, content=note.content, note_time=note.note_time)
+    return NoteResponse(id=note.id, content=note.content, note_time=note.note_time, duration_minutes=note.duration_minutes)
 
 
 @app.get("/api/notes", response_model=list[NoteResponse])
@@ -366,7 +411,7 @@ async def list_notes(
         .limit(100)
     )
     notes = result.scalars().all()
-    return [NoteResponse(id=n.id, content=n.content, note_time=n.note_time) for n in notes]
+    return [NoteResponse(id=n.id, content=n.content, note_time=n.note_time, duration_minutes=n.duration_minutes) for n in notes]
 
 
 @app.put("/api/notes/{note_id}", response_model=NoteResponse)
@@ -386,11 +431,21 @@ async def edit_note(
     if data.content is not None:
         note.content = data.content.strip()
     if data.note_time is not None:
+        if data.note_time > datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Cannot set note time to future date")
         note.note_time = data.note_time
+    if data.duration_hours is not None or data.duration_minutes is not None:
+        h = data.duration_hours if data.duration_hours is not None else note.duration_minutes // 60
+        m = data.duration_minutes if data.duration_minutes is not None else note.duration_minutes % 60
+        if h < 0 or m < 0:
+            raise HTTPException(status_code=400, detail="Duration must be positive")
+        if m > 59:
+            raise HTTPException(status_code=400, detail="Minutes must be 0-59")
+        note.duration_minutes = h * 60 + m
 
     await db.commit()
     await db.refresh(note)
-    return NoteResponse(id=note.id, content=note.content, note_time=note.note_time)
+    return NoteResponse(id=note.id, content=note.content, note_time=note.note_time, duration_minutes=note.duration_minutes)
 
 
 @app.delete("/api/notes/{note_id}")
