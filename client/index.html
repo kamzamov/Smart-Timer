@@ -7,268 +7,114 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f0f2f5;
-            color: #1a1a2e;
-            min-height: 100vh;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #1a1a2e; min-height: 100vh; }
         .container { max-width: 900px; margin: 0 auto; padding: 20px; }
-        header {
-            text-align: center;
-            padding: 30px 0 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+        header { text-align: center; padding: 30px 0 20px; display: flex; justify-content: space-between; align-items: center; }
         header h1 { font-size: 2.2rem; color: #16213e; }
         header p { color: #666; margin-top: 5px; }
         .user-info { font-size: 0.9rem; color: #666; }
         .user-info strong { color: #4361ee; }
-        .btn-logout {
-            padding: 8px 16px;
-            background: #e63946;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            margin-left: 10px;
-        }
+        .btn-logout { padding: 8px 16px; background: #e63946; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin-left: 10px; }
         .btn-logout:hover { background: #c5303c; }
 
         /* Auth */
-        .auth-container {
-            max-width: 400px;
-            margin: 100px auto;
-            background: #fff;
-            border-radius: 12px;
-            padding: 32px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
+        .auth-container { max-width: 400px; margin: 100px auto; background: #fff; border-radius: 12px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .auth-container h2 { text-align: center; margin-bottom: 24px; color: #16213e; }
-        .auth-container input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            margin-bottom: 12px;
-            outline: none;
-        }
+        .auth-container input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; margin-bottom: 12px; outline: none; }
         .auth-container input:focus { border-color: #4361ee; }
-        .auth-container .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            background: #4361ee;
-            color: #fff;
-        }
+        .auth-container .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; background: #4361ee; color: #fff; }
         .auth-container .btn:hover { background: #3a56d4; }
-        .auth-toggle {
-            text-align: center;
-            margin-top: 16px;
-            color: #4361ee;
-            cursor: pointer;
-        }
+        .auth-toggle { text-align: center; margin-top: 16px; color: #4361ee; cursor: pointer; }
         .auth-toggle:hover { text-decoration: underline; }
 
         /* App */
         #appView { display: none; }
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
+        .card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .card h2 { font-size: 1.2rem; margin-bottom: 16px; color: #16213e; }
         .timer-section { text-align: center; }
-        .subject-input-group {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .subject-input-group input {
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            min-width: 200px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+        .subject-input-group { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .subject-input-group input { padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; min-width: 200px; outline: none; transition: border-color 0.2s; }
         .subject-input-group input:focus { border-color: #4361ee; }
-        .timer-display {
-            font-size: 4rem;
-            font-weight: 700;
-            font-variant-numeric: tabular-nums;
-            color: #16213e;
-            margin: 20px 0;
-        }
+        .timer-display { font-size: 4rem; font-weight: 700; font-variant-numeric: tabular-nums; color: #16213e; margin: 20px 0; }
         .timer-display.running { color: #4361ee; }
         .btn-group { display: flex; gap: 12px; justify-content: center; }
-        .btn {
-            padding: 14px 36px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+        .btn { padding: 14px 36px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-start { background: #4361ee; color: #fff; }
         .btn-start:hover:not(:disabled) { background: #3a56d4; }
         .btn-stop { background: #e63946; color: #fff; }
         .btn-stop:hover:not(:disabled) { background: #c5303c; }
 
-        .stats-summary {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .stat-box {
-            flex: 1;
-            min-width: 140px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 16px;
-            text-align: center;
-        }
+        .stats-summary { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; }
+        .stat-box { flex: 1; min-width: 140px; background: #f8f9fa; border-radius: 8px; padding: 16px; text-align: center; }
         .stat-box .value { font-size: 1.8rem; font-weight: 700; color: #4361ee; }
         .stat-box .label { font-size: 0.85rem; color: #666; margin-top: 4px; }
         .chart-container { position: relative; height: 250px; margin-top: 10px; }
-
         .subject-breakdown { margin-top: 16px; }
         .subject-breakdown table { width: 100%; border-collapse: collapse; }
-        .subject-breakdown th, .subject-breakdown td {
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
+        .subject-breakdown th, .subject-breakdown td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
         .subject-breakdown th { background: #f8f9fa; font-size: 0.85rem; color: #666; }
-
         .sessions-list { margin-top: 16px; }
-        .session-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9rem;
-        }
+        .session-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
         .session-item .subj { font-weight: 600; flex: 1; }
         .session-item .dur { color: #4361ee; font-weight: 600; margin: 0 12px; }
         .session-item .time { color: #888; margin-right: 12px; }
-        .session-actions button {
-            padding: 4px 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            margin-left: 4px;
-        }
+        .session-actions button { padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; margin-left: 4px; }
         .btn-edit { background: #f77f00; color: #fff; }
-        .btn-edit:hover { background: #e06f00; }
         .btn-del { background: #e63946; color: #fff; }
-        .btn-del:hover { background: #c5303c; }
-
-        .export-btn {
-            display: inline-block;
-            margin-top: 12px;
-            padding: 8px 16px;
-            background: #2ec4b6;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-        }
+        .export-btn { display: inline-block; margin-top: 12px; padding: 8px 16px; background: #2ec4b6; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
         .export-btn:hover { background: #28b0a3; }
-
-        .status-msg {
-            text-align: center;
-            padding: 8px;
-            border-radius: 6px;
-            margin-top: 10px;
-            font-size: 0.9rem;
-        }
+        .status-msg { text-align: center; padding: 8px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; }
         .status-msg.error { background: #fde8e8; color: #e63946; }
         .status-msg.success { background: #e8f5e9; color: #2e7d32; }
 
+        /* Notes */
+        .note-inputs { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: flex-end; }
+        .note-inputs input[type="text"] { flex: 2; min-width: 200px; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; outline: none; }
+        .note-inputs input[type="date"] { flex: 1; min-width: 140px; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; outline: none; }
+        .note-dur { display: flex; gap: 4px; align-items: center; }
+        .note-dur input { width: 50px; padding: 10px 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; outline: none; text-align: center; }
+        .note-dur span { color: #666; }
+        .note-add { padding: 10px 20px; background: #4361ee; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+        .note-add:hover { background: #3a56d4; }
+
         /* Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.4);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-        }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; justify-content: center; align-items: center; }
         .modal-overlay.active { display: flex; }
-        .modal {
-            background: #fff;
-            border-radius: 12px;
-            padding: 24px;
-            width: 360px;
-            max-width: 90%;
-        }
+        .modal { background: #fff; border-radius: 12px; padding: 24px; width: 360px; max-width: 90%; }
         .modal h3 { margin-bottom: 16px; }
-        .modal input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            margin-bottom: 10px;
-            outline: none;
-        }
+        .modal input { width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem; margin-bottom: 10px; outline: none; }
         .modal input:focus { border-color: #4361ee; }
         .modal-btns { display: flex; gap: 10px; margin-top: 8px; }
-        .modal-btns button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-        }
+        .modal-btns button { flex: 1; padding: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .modal-save { background: #4361ee; color: #fff; }
         .modal-cancel { background: #e0e0e0; color: #333; }
+        .modal label { font-size: 0.85rem; color: #666; }
+        .modal .dur-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+        .modal .dur-row input { flex: 1; margin-bottom: 0; }
+        .modal .dur-row span { color: #666; }
+        .modal .err { font-size: 0.8rem; color: #e63946; margin-bottom: 8px; }
     </style>
 </head>
 <body>
 
-<!-- Auth View -->
 <div id="authView">
     <div class="auth-container">
         <h2 id="authTitle">Login</h2>
-        <input type="text" id="authUsername" placeholder="Username" autocomplete="username" />
-        <input type="password" id="authPassword" placeholder="Password" autocomplete="new-password" />
-        <input type="password" id="authConfirmPassword" placeholder="Confirm Password" autocomplete="new-password" style="display:none;" />
+        <input type="text" id="authUsername" placeholder="Username" />
+        <input type="password" id="authPassword" placeholder="Password" />
+        <input type="password" id="authConfirmPassword" placeholder="Confirm Password" style="display:none;" />
         <button class="btn" id="authBtn" onclick="handleAuth()">Login</button>
-        <div class="auth-toggle" id="authToggle" onclick="toggleAuthMode()">
-            Don't have an account? <strong>Register</strong>
-        </div>
+        <div class="auth-toggle" id="authToggle" onclick="toggleAuthMode()">Don't have an account? <strong>Register</strong></div>
         <div id="authStatus"></div>
     </div>
 </div>
 
-<!-- App View -->
 <div id="appView">
     <div class="container">
         <header>
             <div>
-                <h1>⏱ Smart Timer</h1>
+                <h1>Smart Timer</h1>
                 <p>Track your study sessions</p>
             </div>
             <div class="user-info">
@@ -277,7 +123,6 @@
             </div>
         </header>
 
-        <!-- Timer -->
         <div class="card timer-section">
             <h2>Study Session</h2>
             <div class="subject-input-group">
@@ -286,93 +131,59 @@
             </div>
             <div class="timer-display" id="timerDisplay">00:00:00</div>
             <div class="btn-group">
-                <button class="btn btn-start" id="btnStart" onclick="startSession()">▶ Start</button>
-                <button class="btn btn-stop" id="btnStop" onclick="stopSession()" disabled>⏹ Stop</button>
+                <button class="btn btn-start" id="btnStart" onclick="startSession()">Start</button>
+                <button class="btn btn-stop" id="btnStop" onclick="stopSession()" disabled>Stop</button>
             </div>
             <div id="statusMsg"></div>
         </div>
 
-        <!-- Stats -->
         <div class="card">
-            <h2>📊 Weekly Statistics</h2>
+            <h2>Weekly Statistics</h2>
             <div class="stats-summary">
-                <div class="stat-box">
-                    <div class="value" id="totalMinutes">0</div>
-                    <div class="label">Total Minutes</div>
-                </div>
-                <div class="stat-box">
-                    <div class="value" id="totalHours">0</div>
-                    <div class="label">Total Hours</div>
-                </div>
-                <div class="stat-box">
-                    <div class="value" id="sessionCount">0</div>
-                    <div class="label">Sessions</div>
-                </div>
+                <div class="stat-box"><div class="value" id="totalMinutes">0</div><div class="label">Total Minutes</div></div>
+                <div class="stat-box"><div class="value" id="totalHours">0</div><div class="label">Total Hours</div></div>
+                <div class="stat-box"><div class="value" id="sessionCount">0</div><div class="label">Sessions</div></div>
             </div>
-
-            <div class="chart-container">
-                <canvas id="dayChart"></canvas>
-            </div>
-
+            <div class="chart-container"><canvas id="dayChart"></canvas></div>
             <div class="subject-breakdown" id="subjectBreakdown" style="display:none;">
                 <h3 style="font-size:1rem; margin-bottom:10px;">By Subject</h3>
-                <table>
-                    <thead><tr><th>Subject</th><th>Minutes</th><th>Hours</th></tr></thead>
-                    <tbody id="subjectTableBody"></tbody>
-                </table>
+                <table><thead><tr><th>Subject</th><th>Minutes</th><th>Hours</th></tr></thead><tbody id="subjectTableBody"></tbody></table>
             </div>
-
             <div class="sessions-list" id="sessionsList" style="display:none;">
                 <h3 style="font-size:1rem; margin: 16px 0 10px;">Recent Sessions</h3>
                 <div id="sessionsListContent"></div>
             </div>
-
-            <button class="export-btn" onclick="exportCSV()">📥 Export CSV</button>
+            <button class="export-btn" onclick="exportCSV()">Export CSV</button>
         </div>
 
-        <!-- Notes -->
         <div class="card">
-            <h2>📝 Study Notes</h2>
-            <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
-                <div style="flex:2;min-width:200px;">
-                    <input type="text" id="noteContent" placeholder="Write a note..." style="width:100%;padding:10px 14px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;" />
+            <h2>Study Notes</h2>
+            <div class="note-inputs">
+                <input type="text" id="noteContent" placeholder="What did you study?" />
+                <input type="date" id="noteDate" />
+                <div class="note-dur">
+                    <input type="number" id="noteHours" placeholder="h" min="0" />
+                    <span>h</span>
+                    <input type="number" id="noteMinutes" placeholder="m" min="0" max="59" />
+                    <span>m</span>
                 </div>
-                <div style="flex:1;min-width:140px;">
-                    <label style="font-size:0.8rem;color:#666;">Date</label>
-                    <input type="date" id="noteDate" style="width:100%;padding:10px 12px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;" />
-                </div>
-                <div style="flex:1.5;min-width:180px;">
-                    <label style="font-size:0.8rem;color:#666;">Duration</label>
-                    <div style="display:flex;gap:4px;align-items:center;">
-                        <input type="number" id="noteHours" placeholder="h" min="0" style="width:50px;padding:10px 8px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;text-align:center;" />
-                        <span style="color:#666;">h</span>
-                        <input type="number" id="noteMinutes" placeholder="m" min="0" max="59" style="width:50px;padding:10px 8px;border:2px solid #e0e0e0;border-radius:8px;font-size:0.95rem;outline:none;text-align:center;" />
-                        <span style="color:#666;">m</span>
-                    </div>
-                </div>
-                <button onclick="addNote()" style="padding:10px 20px;background:#4361ee;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:0.95rem;">Add</button>
+                <button class="note-add" id="noteAddBtn">Add Note</button>
             </div>
             <div id="notesList"></div>
         </div>
     </div>
 </div>
 
-<!-- Edit Modal -->
 <!-- Edit Session Modal -->
 <div class="modal-overlay" id="editModal">
     <div class="modal">
         <h3>Edit Session</h3>
         <input type="text" id="editSubject" placeholder="Subject" />
-        <label style="font-size:0.85rem;color:#666;">Duration</label>
-        <div style="display:flex;gap:8px;align-items:center;">
-            <input type="number" id="editHours" placeholder="Hours" min="0" style="flex:1;" />
-            <span style="font-size:1.1rem;color:#666;">h</span>
-            <input type="number" id="editMinutes" placeholder="Minutes" min="0" style="flex:1;" />
-            <span style="font-size:1.1rem;color:#666;">m</span>
-        </div>
-        <label style="font-size:0.85rem;color:#666;">Start date & time</label>
-        <input type="datetime-local" id="editStartDt" />
-        <div id="editDurationInfo" style="font-size:0.8rem;color:#888;margin-bottom:8px;"></div>
+        <label>Duration</label>
+        <div class="dur-row"><input type="number" id="editHours" min="0" placeholder="h" /><span>h</span><input type="number" id="editMinutes" min="0" max="59" placeholder="m" /><span>m</span></div>
+        <label>Start date</label>
+        <input type="date" id="editStartDt" />
+        <div id="editInfo" class="err" style="color:#888;"></div>
         <div class="modal-btns">
             <button class="modal-cancel" onclick="closeEditModal()">Cancel</button>
             <button class="modal-save" onclick="saveEdit()">Save</button>
@@ -384,17 +195,12 @@
 <div class="modal-overlay" id="editNoteModal">
     <div class="modal">
         <h3>Edit Note</h3>
-        <input type="text" id="editNoteContent" placeholder="Note content" />
-        <label style="font-size:0.85rem;color:#666;">Date</label>
+        <input type="text" id="editNoteContent" placeholder="Content" />
+        <label>Date</label>
         <input type="date" id="editNoteDate" />
-        <label style="font-size:0.85rem;color:#666;">Duration</label>
-        <div style="display:flex;gap:8px;align-items:center;">
-            <input type="number" id="editNoteHours" placeholder="Hours" min="0" style="flex:1;" />
-            <span style="color:#666;">h</span>
-            <input type="number" id="editNoteMinutes" placeholder="Minutes" min="0" max="59" style="flex:1;" />
-            <span style="color:#666;">m</span>
-        </div>
-        <div id="editNoteError" style="font-size:0.8rem;color:#e63946;margin-bottom:8px;margin-top:4px;"></div>
+        <label>Duration</label>
+        <div class="dur-row"><input type="number" id="editNoteHours" min="0" placeholder="h" /><span>h</span><input type="number" id="editNoteMinutes" min="0" max="59" placeholder="m" /><span>m</span></div>
+        <div id="editNoteError" class="err"></div>
         <div class="modal-btns">
             <button class="modal-cancel" onclick="closeEditNoteModal()">Cancel</button>
             <button class="modal-save" onclick="saveEditNote()">Save</button>
@@ -403,574 +209,459 @@
 </div>
 
 <script>
-    const API = '/api';
-    let token = localStorage.getItem('st_token');
-    let username = localStorage.getItem('st_username');
-    let isRegisterMode = false;
-    let currentSessionId = null;
-    let timerInterval = null;
-    let startTime = null;
-    let dayChart = null;
-    let editingSessionId = null;
+var API = '/api';
+var token = localStorage.getItem('st_token');
+var username = localStorage.getItem('st_username');
+var isRegisterMode = false;
+var currentSessionId = null;
+var timerInterval = null;
+var startTime = null;
+var dayChart = null;
+var editingSessionId = null;
+var editingNoteId = null;
 
-    // --- Auth ---
-    function showAuthStatus(msg, isError) {
-        const el = document.getElementById('authStatus');
-        el.innerHTML = `<div class="status-msg ${isError ? 'error' : 'success'}">${msg}</div>`;
-        setTimeout(() => { el.innerHTML = ''; }, 4000);
+function authHeaders() {
+    return { 'Authorization': 'Bearer ' + token };
+}
+
+/* ===== AUTH ===== */
+function showAuthStatus(msg, isError) {
+    var el = document.getElementById('authStatus');
+    el.innerHTML = '<div class="status-msg ' + (isError ? 'error' : 'success') + '">' + msg + '</div>';
+    setTimeout(function() { el.innerHTML = ''; }, 4000);
+}
+
+function toggleAuthMode() {
+    isRegisterMode = !isRegisterMode;
+    document.getElementById('authTitle').textContent = isRegisterMode ? 'Register' : 'Login';
+    document.getElementById('authBtn').textContent = isRegisterMode ? 'Register' : 'Login';
+    document.getElementById('authToggle').innerHTML = isRegisterMode ? 'Already have an account? <strong>Login</strong>' : "Don't have an account? <strong>Register</strong>";
+    document.getElementById('authConfirmPassword').style.display = isRegisterMode ? 'block' : 'none';
+}
+
+function handleAuth() {
+    var u = document.getElementById('authUsername').value.trim();
+    var p = document.getElementById('authPassword').value;
+    if (!u || !p) { showAuthStatus('Fill in all fields', true); return; }
+    if (isRegisterMode) {
+        var cp = document.getElementById('authConfirmPassword').value;
+        if (p !== cp) { showAuthStatus('Passwords do not match', true); return; }
     }
+    var endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+    fetch(API + endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: u, password: p })
+    }).then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.access_token) { showAuthStatus(data.detail || 'Error', true); return; }
+        token = data.access_token;
+        username = data.username;
+        localStorage.setItem('st_token', token);
+        localStorage.setItem('st_username', username);
+        showApp();
+    }).catch(function() { showAuthStatus('Network error', true); });
+}
 
-    function toggleAuthMode() {
-        isRegisterMode = !isRegisterMode;
-        document.getElementById('authTitle').textContent = isRegisterMode ? 'Register' : 'Login';
-        document.getElementById('authBtn').textContent = isRegisterMode ? 'Register' : 'Login';
-        document.getElementById('authToggle').innerHTML = isRegisterMode
-            ? 'Already have an account? <strong>Login</strong>'
-            : "Don't have an account? <strong>Register</strong>";
-        document.getElementById('authConfirmPassword').style.display = isRegisterMode ? 'block' : 'none';
-        document.getElementById('authPassword').placeholder = isRegisterMode ? 'Password' : 'Password';
-    }
+function logout() {
+    token = null;
+    username = null;
+    localStorage.removeItem('st_token');
+    localStorage.removeItem('st_username');
+    showAuth();
+}
 
-    async function handleAuth() {
-        const u = document.getElementById('authUsername').value.trim();
-        const p = document.getElementById('authPassword').value;
-        if (!u || !p) { showAuthStatus('Fill in all fields', true); return; }
+function showAuth() {
+    document.getElementById('authView').style.display = 'block';
+    document.getElementById('appView').style.display = 'none';
+}
 
-        if (isRegisterMode) {
-            const cp = document.getElementById('authConfirmPassword').value;
-            if (p !== cp) { showAuthStatus('Passwords do not match', true); return; }
-        }
+function showApp() {
+    document.getElementById('authView').style.display = 'none';
+    document.getElementById('appView').style.display = 'block';
+    document.getElementById('displayUsername').textContent = username;
+    loadSubjects();
+    loadStats();
+    loadNotes();
+}
 
-        const endpoint = isRegisterMode ? '/auth/register' : '/auth/login';
-        try {
-            const res = await fetch(API + endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p })
-            });
-            const data = await res.json();
-            if (!res.ok) { showAuthStatus(data.detail || 'Error', true); return; }
+/* ===== TIMER ===== */
+function formatTime(totalSeconds) {
+    var h = Math.floor(totalSeconds / 3600);
+    var m = Math.floor((totalSeconds % 3600) / 60);
+    var s = totalSeconds % 60;
+    return String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
 
-            token = data.access_token;
-            username = data.username;
-            localStorage.setItem('st_token', token);
-            localStorage.setItem('st_username', username);
-            showApp();
-        } catch (e) {
-            showAuthStatus('Network error', true);
-        }
-    }
+function showStatus(msg, isError) {
+    var el = document.getElementById('statusMsg');
+    el.className = 'status-msg ' + (isError ? 'error' : 'success');
+    el.textContent = msg;
+    setTimeout(function() { el.textContent = ''; el.className = ''; }, 4000);
+}
 
-    function logout() {
-        token = null;
-        username = null;
-        localStorage.removeItem('st_token');
-        localStorage.removeItem('st_username');
-        showAuth();
-    }
+function updateTimerDisplay() {
+    if (!startTime) return;
+    var elapsed = Math.floor((Date.now() - startTime) / 1000);
+    document.getElementById('timerDisplay').textContent = formatTime(elapsed);
+}
 
-    function showAuth() {
-        document.getElementById('authView').style.display = 'block';
-        document.getElementById('appView').style.display = 'none';
-    }
-
-    function showApp() {
-        document.getElementById('authView').style.display = 'none';
-        document.getElementById('appView').style.display = 'block';
-        document.getElementById('displayUsername').textContent = username;
-        loadSubjects();
-        loadStats();
-        loadNotes();
-    }
-
-    function authHeaders() {
-        return { 'Authorization': 'Bearer ' + token };
-    }
-
-    // --- Timer ---
-    function formatTime(totalSeconds) {
-        const h = Math.floor(totalSeconds / 3600);
-        const m = Math.floor((totalSeconds % 3600) / 60);
-        const s = totalSeconds % 60;
-        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    }
-
-    function showStatus(msg, isError) {
-        const el = document.getElementById('statusMsg');
-        el.className = `status-msg ${isError ? 'error' : 'success'}`;
-        el.textContent = msg;
-        setTimeout(() => { el.textContent = ''; el.className = ''; }, 4000);
-    }
-
-    function updateTimerDisplay() {
-        if (!startTime) return;
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        document.getElementById('timerDisplay').textContent = formatTime(elapsed);
-    }
-
-    async function loadSubjects() {
-        try {
-            const res = await fetch(API + '/subjects', { headers: authHeaders() });
-            if (!res.ok) return;
-            const data = await res.json();
-            const datalist = document.getElementById('subjectList');
-            datalist.innerHTML = '';
-            data.forEach(item => {
-                const opt = document.createElement('option');
+function loadSubjects() {
+    fetch(API + '/subjects', { headers: authHeaders() })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var dl = document.getElementById('subjectList');
+            dl.innerHTML = '';
+            data.forEach(function(item) {
+                var opt = document.createElement('option');
                 opt.value = item.subject;
-                datalist.appendChild(opt);
+                dl.appendChild(opt);
             });
-        } catch (e) {}
-    }
+        }).catch(function() {});
+}
 
-    async function startSession() {
-        const subject = document.getElementById('subjectInput').value.trim();
-        if (!subject) { showStatus('Please enter a subject name', true); return; }
-        try {
-            const res = await fetch(API + '/sessions/start', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', ...authHeaders() },
-                body: JSON.stringify({ subject: subject })
-            });
-            if (!res.ok) { showStatus('Failed to start session', true); return; }
-            const data = await res.json();
-            currentSessionId = data.id;
-            startTime = Date.now();
-            document.getElementById('timerDisplay').classList.add('running');
-            document.getElementById('btnStart').disabled = true;
-            document.getElementById('btnStop').disabled = false;
-            document.getElementById('subjectInput').disabled = true;
-            timerInterval = setInterval(updateTimerDisplay, 1000);
-            showStatus('Started: ' + subject, false);
-        } catch (e) {
-            showStatus('Network error', true);
+function startSession() {
+    var subject = document.getElementById('subjectInput').value.trim();
+    if (!subject) { showStatus('Enter a subject', true); return; }
+    fetch(API + '/sessions/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subject: subject })
+    }).then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (!data.id) { showStatus('Failed to start', true); return; }
+        currentSessionId = data.id;
+        startTime = Date.now();
+        document.getElementById('timerDisplay').classList.add('running');
+        document.getElementById('btnStart').disabled = true;
+        document.getElementById('btnStop').disabled = false;
+        document.getElementById('subjectInput').disabled = true;
+        timerInterval = setInterval(updateTimerDisplay, 1000);
+        showStatus('Started: ' + subject, false);
+    }).catch(function() { showStatus('Network error', true); });
+}
+
+function stopSession() {
+    if (!currentSessionId) return;
+    fetch(API + '/sessions/' + currentSessionId + '/stop', { method: 'POST', headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        currentSessionId = null;
+        startTime = null;
+        document.getElementById('timerDisplay').textContent = '00:00:00';
+        document.getElementById('timerDisplay').classList.remove('running');
+        document.getElementById('btnStart').disabled = false;
+        document.getElementById('btnStop').disabled = true;
+        document.getElementById('subjectInput').disabled = false;
+        showStatus('Stopped: ' + data.duration_minutes.toFixed(1) + ' min', false);
+        loadStats();
+        loadSubjects();
+    }).catch(function() { showStatus('Network error', true); });
+}
+
+/* ===== STATS ===== */
+function loadStats() {
+    fetch(API + '/stats/weekly', { headers: authHeaders() })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        var totalMin = data.total_minutes || 0;
+        var sessions = data.last_sessions || [];
+        document.getElementById('totalMinutes').textContent = Math.round(totalMin);
+        document.getElementById('totalHours').textContent = (totalMin / 60).toFixed(1);
+        document.getElementById('sessionCount').textContent = sessions.length;
+
+        var days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        var COLORS = ['#4361ee','#e63946','#2ec4b6','#f77f00','#7209b7','#06d6a0','#ef476f','#118ab2','#073b4c','#ff6b6b'];
+        if (dayChart) { dayChart.destroy(); dayChart = null; }
+        var ctx = document.getElementById('dayChart').getContext('2d');
+        var byDayBySubject = data.by_day_by_subject || {};
+        var subjNames = Object.keys(byDayBySubject);
+        var datasets = subjNames.map(function(subj, i) {
+            return { label: subj, data: byDayBySubject[subj] || [0,0,0,0,0,0,0], backgroundColor: COLORS[i % COLORS.length], borderRadius: 4 };
+        });
+        if (datasets.length === 0) {
+            datasets.push({ label: 'Minutes', data: data.by_day || [0,0,0,0,0,0,0], backgroundColor: '#4361ee', borderRadius: 6 });
         }
-    }
-
-    async function stopSession() {
-        if (!currentSessionId) return;
-        try {
-            const res = await fetch(API + '/sessions/' + currentSessionId + '/stop', {
-                method: 'POST',
-                headers: authHeaders()
-            });
-            if (!res.ok) { showStatus('Failed to stop session', true); return; }
-            const data = await res.json();
-            clearInterval(timerInterval);
-            timerInterval = null;
-            currentSessionId = null;
-            startTime = null;
-            document.getElementById('timerDisplay').textContent = '00:00:00';
-            document.getElementById('timerDisplay').classList.remove('running');
-            document.getElementById('btnStart').disabled = false;
-            document.getElementById('btnStop').disabled = true;
-            document.getElementById('subjectInput').disabled = false;
-            showStatus('Stopped. Duration: ' + data.duration_minutes.toFixed(1) + ' min', false);
-            loadStats();
-            loadSubjects();
-        } catch (e) {
-            showStatus('Network error', true);
-        }
-    }
-
-    // --- Stats ---
-    async function loadStats() {
-        try {
-            const res = await fetch(API + '/stats/weekly', { headers: authHeaders() });
-            if (!res.ok) return;
-            const data = await res.json();
-
-            const totalMin = data.total_minutes || 0;
-            const sessions = data.last_sessions || [];
-
-            document.getElementById('totalMinutes').textContent = Math.round(totalMin);
-            document.getElementById('totalHours').textContent = (totalMin / 60).toFixed(1);
-            document.getElementById('sessionCount').textContent = sessions.length;
-
-            const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-            const COLORS = [
-                '#4361ee','#e63946','#2ec4b6','#f77f00','#7209b7',
-                '#06d6a0','#ef476f','#118ab2','#073b4c','#ff6b6b',
-                '#5f27cd','#feca57','#48dbfb','#ff9ff3','#54a0ff',
-            ];
-            if (dayChart) { dayChart.destroy(); dayChart = null; }
-            const ctx = document.getElementById('dayChart').getContext('2d');
-
-            const byDayBySubject = data.by_day_by_subject || {};
-            const subjectNames = Object.keys(byDayBySubject);
-            const datasets = subjectNames.map((subj, i) => ({
-                label: subj,
-                data: byDayBySubject[subj] || [0,0,0,0,0,0,0],
-                backgroundColor: COLORS[i % COLORS.length],
-                borderRadius: 4,
-            }));
-
-            if (datasets.length === 0) {
-                datasets.push({
-                    label: 'Minutes',
-                    data: data.by_day || [0,0,0,0,0,0,0],
-                    backgroundColor: '#4361ee',
-                    borderRadius: 6,
-                });
-            }
-
-            dayChart = new Chart(ctx, {
-                type: 'bar',
-                data: { labels: days, datasets: datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: subjectNames.length > 1, position: 'top' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + context.parsed.y.toFixed(1) + ' min';
-                                },
-                                footer: function(items) {
-                                    if (subjectNames.length > 1) {
-                                        const total = items.reduce((sum, item) => sum + item.parsed.y, 0);
-                                        return 'Total: ' + total.toFixed(1) + ' min';
-                                    }
-                                    return '';
+        dayChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: days, datasets: datasets },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: subjNames.length > 1, position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(c) { return c.dataset.label + ': ' + c.parsed.y.toFixed(1) + ' min'; },
+                            footer: function(items) {
+                                if (subjNames.length > 1) {
+                                    var total = items.reduce(function(s, item) { return s + item.parsed.y; }, 0);
+                                    return 'Total: ' + total.toFixed(1) + ' min';
                                 }
+                                return '';
                             }
                         }
-                    },
-                    scales: {
-                        x: { stacked: true },
-                        y: { stacked: true, beginAtZero: true, ticks: { stepSize: 15 } }
                     }
-                }
-            });
-
-            const bySubject = data.by_subject || {};
-            const subjectEntries = Object.entries(bySubject);
-            const sbDiv = document.getElementById('subjectBreakdown');
-            const tbody = document.getElementById('subjectTableBody');
-            if (subjectEntries.length > 0) {
-                sbDiv.style.display = 'block';
-                tbody.innerHTML = subjectEntries
-                    .sort((a,b) => b[1] - a[1])
-                    .map(([subj, mins]) =>
-                        '<tr><td>' + subj + '</td><td>' + Math.round(mins) + '</td><td>' + (mins/60).toFixed(1) + '</td></tr>'
-                    ).join('');
-            } else {
-                sbDiv.style.display = 'none';
+                },
+                scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 15 } } }
             }
-
-            const slDiv = document.getElementById('sessionsList');
-            const slContent = document.getElementById('sessionsListContent');
-            if (sessions.length > 0) {
-                slDiv.style.display = 'block';
-                slContent.innerHTML = sessions.map(s => {
-                    const startStr = new Date(s.start_time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-                    return '<div class="session-item">' +
-                        '<span class="subj">' + s.subject + '</span>' +
-                        '<span class="time">' + startStr + '</span>' +
-                        '<span class="dur">' + s.duration_minutes.toFixed(1) + ' min</span>' +
-                        '<span class="session-actions">' +
-                            '<button class="btn-edit" onclick="openEditModal(' + s.id + ')">Edit</button>' +
-                            '<button class="btn-del" onclick="deleteSession(' + s.id + ')">Delete</button>' +
-                        '</span>' +
-                    '</div>';
-                }).join('');
-            } else {
-                slDiv.style.display = 'none';
-            }
-        } catch (e) {
-            console.error('loadStats error:', e);
-        }
-    }
-
-    // --- Edit / Delete ---
-    function openEditModal(sessionId) {
-        editingSessionId = sessionId;
-        fetch(API + '/sessions', { headers: authHeaders() })
-            .then(function(r) { return r.json(); })
-            .then(function(sessions) {
-                var s = sessions.find(function(x) { return x.id === sessionId; });
-                if (!s) return;
-                document.getElementById('editSubject').value = s.subject;
-                var totalMin = s.duration_minutes || 0;
-                var h = Math.floor(totalMin / 60);
-                var m = Math.round(totalMin % 60);
-                document.getElementById('editHours').value = h > 0 ? h : '';
-                document.getElementById('editMinutes').value = m > 0 ? m : '';
-                document.getElementById('editStartDt').value = fmtLocal(s.start_time);
-                document.getElementById('editDurationInfo').textContent = 'Current: ' + s.duration_minutes.toFixed(1) + ' min';
-                document.getElementById('editModal').classList.add('active');
-            });
-    }
-
-    function closeEditModal() {
-        document.getElementById('editModal').classList.remove('active');
-        editingSessionId = null;
-    }
-
-    async function saveEdit() {
-        if (!editingSessionId) return;
-        var subject = document.getElementById('editSubject').value.trim();
-        var hours = parseInt(document.getElementById('editHours').value) || 0;
-        var minutes = parseInt(document.getElementById('editMinutes').value) || 0;
-
-        if (hours < 0 || minutes < 0) {
-            showStatus('Hours and minutes must be positive', true);
-            return;
-        }
-        if (hours === 0 && minutes === 0) {
-            showStatus('Enter at least 1 minute', true);
-            return;
-        }
-        if (minutes > 59) {
-            showStatus('Minutes must be 0-59', true);
-            return;
-        }
-
-        var body = {};
-        if (subject) body.subject = subject;
-
-        // Calculate new end_time based on duration and optional start date
-        fetch(API + '/sessions', { headers: authHeaders() })
-            .then(function(r) { return r.json(); })
-            .then(function(sessions) {
-                var s = sessions.find(function(x) { return x.id === editingSessionId; });
-                if (!s) { showStatus('Session not found', true); return; }
-
-                var startMs;
-                var startDt = document.getElementById('editStartDt').value;
-                if (startDt) {
-                    var dt = new Date(startDt);
-                    if (isNaN(dt.getTime())) { showStatus('Invalid start date', true); return; }
-                    startMs = dt.getTime();
-                } else {
-                    startMs = new Date(s.start_time).getTime();
-                }
-                var totalMs = (hours * 60 + minutes) * 60 * 1000;
-                var endMs = startMs + totalMs;
-                body.start_time = new Date(startMs).toISOString();
-                body.end_time = new Date(endMs).toISOString();
-
-                return fetch(API + '/sessions/' + editingSessionId, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', ...authHeaders() },
-                    body: JSON.stringify(body)
-                });
-            })
-            .then(function(res) {
-                if (!res) return;
-                if (!res.ok) { showStatus('Failed to update', true); return; }
-                closeEditModal();
-                showStatus('Session updated', false);
-                loadStats();
-                loadSubjects();
-            })
-            .catch(function(e) {
-                showStatus('Network error', true);
-            });
-    }
-
-    async function deleteSession(sessionId) {
-        if (!confirm('Delete this session?')) return;
-        try {
-            const res = await fetch(API + '/sessions/' + sessionId, {
-                method: 'DELETE',
-                headers: authHeaders()
-            });
-            if (!res.ok) { showStatus('Failed to delete', true); return; }
-            showStatus('Session deleted', false);
-            loadStats();
-            loadSubjects();
-        } catch (e) {
-            showStatus('Network error', true);
-        }
-    }
-
-    function exportCSV() {
-        const a = document.createElement('a');
-        a.href = API + '/export/csv';
-        a.click();
-    }
-
-    // --- Notes ---
-    function fmtLocal(dt) {
-        var d = new Date(dt);
-        var off = d.getTimezoneOffset();
-        var local = new Date(d.getTime() - off * 60000);
-        return local.toISOString().slice(0, 16);
-    }
-
-    function addNote() {
-        var content = document.getElementById('noteContent').value.trim();
-        if (!content) { showStatus('Write something', true); return; }
-
-        var hours = parseInt(document.getElementById('noteHours').value) || 0;
-        var minutes = parseInt(document.getElementById('noteMinutes').value) || 0;
-
-        if (hours < 0 || minutes < 0) { showStatus('Duration must be positive', true); return; }
-        if (hours === 0 && minutes === 0) { showStatus('Enter at least 1 minute', true); return; }
-        if (minutes > 59) { showStatus('Minutes must be 0-59', true); return; }
-
-        var body = { content: content, duration_hours: hours, duration_minutes: minutes };
-        var nd = document.getElementById('noteDate').value;
-        if (nd) {
-            var dt = new Date(nd + 'T00:00:00');
-            if (isNaN(dt.getTime())) { showStatus('Invalid date', true); return; }
-            if (dt > new Date()) { showStatus('Cannot add notes for future dates', true); return; }
-            body.note_time = dt.toISOString();
-        }
-        fetch(API + '/notes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        })
-        .then(function(r) {
-            if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail || 'Error'); });
-            return r.json();
-        })
-        .then(function(data) {
-            document.getElementById('noteContent').value = '';
-            document.getElementById('noteHours').value = '';
-            document.getElementById('noteMinutes').value = '';
-            document.getElementById('noteDate').value = '';
-            showStatus('Note added', false);
-            loadNotes();
-        })
-        .catch(function(e) { showStatus(e.message || 'Failed to add note', true); });
-    }
-
-    function loadNotes() {
-        fetch(API + '/notes', { headers: authHeaders() })
-            .then(function(r) { return r.json(); })
-            .then(function(notes) {
-                var el = document.getElementById('notesList');
-                if (!notes || notes.length === 0) {
-                    el.innerHTML = '<p style="color:#888;font-size:0.9rem;">No notes yet.</p>';
-                    return;
-                }
-                el.innerHTML = notes.map(function(n) {
-                    var dt = new Date(n.note_time);
-                    var dateStr = dt.toLocaleDateString();
-                    var durStr = '';
-                    var dm = n.duration_minutes || 0;
-                    if (dm > 0) {
-                        var dh = Math.floor(dm / 60);
-                        var dmRem = dm % 60;
-                        durStr = (dh > 0 ? dh + 'h ' : '') + dmRem + 'm';
-                    }
-                    return '<div class="session-item">' +
-                        '<span class="subj" style="flex:2;">' + n.content + '</span>' +
-                        '<span class="time">' + dateStr + '</span>' +
-                        (durStr ? '<span class="dur">' + durStr + '</span>' : '') +
-                        '<span class="session-actions">' +
-                            '<button class="btn-edit" onclick="openEditNoteModal(' + n.id + ')">Edit</button>' +
-                            '<button class="btn-del" onclick="deleteNote(' + n.id + ')">Delete</button>' +
-                        '</span>' +
-                    '</div>';
-                }).join('');
-            })
-            .catch(function() {});
-    }
-
-    var editingNoteId = null;
-
-    function openEditNoteModal(noteId) {
-        editingNoteId = noteId;
-        fetch(API + '/notes', { headers: authHeaders() })
-            .then(function(r) { return r.json(); })
-            .then(function(notes) {
-                var n = notes.find(function(x) { return x.id === noteId; });
-                if (!n) return;
-                document.getElementById('editNoteContent').value = n.content;
-                var nd = new Date(n.note_time);
-                document.getElementById('editNoteDate').value = nd.toISOString().slice(0, 10);
-                var dm = n.duration_minutes || 0;
-                document.getElementById('editNoteHours').value = Math.floor(dm / 60);
-                document.getElementById('editNoteMinutes').value = dm % 60;
-                document.getElementById('editNoteError').textContent = '';
-                document.getElementById('editNoteModal').classList.add('active');
-            });
-    }
-
-    function closeEditNoteModal() {
-        document.getElementById('editNoteModal').classList.remove('active');
-        editingNoteId = null;
-    }
-
-    function saveEditNote() {
-        if (!editingNoteId) return;
-        var content = document.getElementById('editNoteContent').value.trim();
-        var nd = document.getElementById('editNoteDate').value;
-        var hours = parseInt(document.getElementById('editNoteHours').value) || 0;
-        var minutes = parseInt(document.getElementById('editNoteMinutes').value) || 0;
-
-        if (!content) {
-            document.getElementById('editNoteError').textContent = 'Content is required';
-            return;
-        }
-        if (hours < 0 || minutes < 0) {
-            document.getElementById('editNoteError').textContent = 'Duration must be positive';
-            return;
-        }
-        if (minutes > 59) {
-            document.getElementById('editNoteError').textContent = 'Minutes must be 0-59';
-            return;
-        }
-
-        var body = { content: content, duration_hours: hours, duration_minutes: minutes };
-        if (nd) {
-            var dt = new Date(nd + 'T00:00:00');
-            if (isNaN(dt.getTime())) {
-                document.getElementById('editNoteError').textContent = 'Invalid date';
-                return;
-            }
-            if (dt > new Date()) {
-                document.getElementById('editNoteError').textContent = 'Cannot set future date';
-                return;
-            }
-            body.note_time = dt.toISOString();
-        }
-        fetch(API + '/notes/' + editingNoteId, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', ...authHeaders() },
-            body: JSON.stringify(body)
-        })
-        .then(function(r) {
-            if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail || 'Error'); });
-            return r.json();
-        })
-        .then(function(data) {
-            closeEditNoteModal();
-            showStatus('Note updated', false);
-            loadNotes();
-        })
-        .catch(function(e) {
-            document.getElementById('editNoteError').textContent = e.message || 'Failed to update';
         });
-    }
 
-    function deleteNote(noteId) {
-        if (!confirm('Delete this note?')) return;
-        fetch(API + '/notes/' + noteId, {
-            method: 'DELETE',
-            headers: authHeaders()
-        })
-        .then(function(r) {
-            if (!r.ok) { showStatus('Failed to delete note', true); return; }
-            showStatus('Note deleted', false);
-            loadNotes();
-        })
-        .catch(function() { showStatus('Network error', true); });
-    }
+        var bySubject = data.by_subject || {};
+        var entries = Object.entries(bySubject);
+        var sbDiv = document.getElementById('subjectBreakdown');
+        var tbody = document.getElementById('subjectTableBody');
+        if (entries.length > 0) {
+            sbDiv.style.display = 'block';
+            tbody.innerHTML = entries.sort(function(a,b) { return b[1] - a[1]; }).map(function(e) {
+                return '<tr><td>' + e[0] + '</td><td>' + Math.round(e[1]) + '</td><td>' + (e[1]/60).toFixed(1) + '</td></tr>';
+            }).join('');
+        } else { sbDiv.style.display = 'none'; }
 
-    // --- Init ---
-    if (token && username) {
-        showApp();
+        var slDiv = document.getElementById('sessionsList');
+        var slContent = document.getElementById('sessionsListContent');
+        if (sessions.length > 0) {
+            slDiv.style.display = 'block';
+            slContent.innerHTML = sessions.map(function(s) {
+                var startStr = new Date(s.start_time).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+                return '<div class="session-item">' +
+                    '<span class="subj">' + s.subject + '</span>' +
+                    '<span class="time">' + startStr + '</span>' +
+                    '<span class="dur">' + s.duration_minutes.toFixed(1) + ' min</span>' +
+                    '<span class="session-actions">' +
+                        '<button class="btn-edit" onclick="openEditModal(' + s.id + ')">Edit</button>' +
+                        '<button class="btn-del" onclick="deleteSession(' + s.id + ')">Delete</button>' +
+                    '</span></div>';
+            }).join('');
+        } else { slDiv.style.display = 'none'; }
+    }).catch(function() {});
+}
+
+/* ===== EDIT/DELETE SESSION ===== */
+function openEditModal(sessionId) {
+    editingSessionId = sessionId;
+    fetch(API + '/sessions', { headers: authHeaders() }).then(function(r) { return r.json(); })
+    .then(function(sessions) {
+        var s = sessions.find(function(x) { return x.id === sessionId; });
+        if (!s) return;
+        document.getElementById('editSubject').value = s.subject;
+        var totalMin = s.duration_minutes || 0;
+        document.getElementById('editHours').value = Math.floor(totalMin / 60);
+        document.getElementById('editMinutes').value = Math.round(totalMin % 60);
+        var d = new Date(s.start_time);
+        document.getElementById('editStartDt').value = d.toISOString().slice(0, 10);
+        document.getElementById('editInfo').textContent = 'Current: ' + totalMin.toFixed(1) + ' min';
+        document.getElementById('editModal').classList.add('active');
+    });
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+    editingSessionId = null;
+}
+
+function saveEdit() {
+    if (!editingSessionId) return;
+    var subject = document.getElementById('editSubject').value.trim();
+    var hours = parseInt(document.getElementById('editHours').value) || 0;
+    var minutes = parseInt(document.getElementById('editMinutes').value) || 0;
+    if (hours < 0 || minutes < 0 || (hours === 0 && minutes === 0) || minutes > 59) {
+        showStatus('Invalid duration', true); return;
+    }
+    var startDt = document.getElementById('editStartDt').value;
+    var body = {};
+    if (subject) body.subject = subject;
+    var startMs;
+    if (startDt) {
+        var dt = new Date(startDt + 'T12:00:00Z');
+        if (isNaN(dt.getTime())) { showStatus('Invalid date', true); return; }
+        startMs = dt.getTime();
     } else {
-        showAuth();
+        showStatus('Pick a start date', true); return;
     }
-    setInterval(loadStats, 30000);
-    setInterval(loadNotes, 30000);
+    var totalMs = (hours * 60 + minutes) * 60 * 1000;
+    body.start_time = new Date(startMs).toISOString();
+    body.end_time = new Date(startMs + totalMs).toISOString();
+
+    fetch(API + '/sessions/' + editingSessionId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    }).then(function(r) {
+        if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });
+        return r.json();
+    }).then(function() {
+        closeEditModal();
+        showStatus('Updated', false);
+        loadStats(); loadSubjects();
+    }).catch(function(e) { showStatus(e.message || 'Failed', true); });
+}
+
+function deleteSession(sessionId) {
+    if (!confirm('Delete this session?')) return;
+    fetch(API + '/sessions/' + sessionId, { method: 'DELETE', headers: authHeaders() })
+    .then(function(r) {
+        if (!r.ok) { showStatus('Failed', true); return; }
+        showStatus('Deleted', false);
+        loadStats(); loadSubjects();
+    }).catch(function() { showStatus('Network error', true); });
+}
+
+/* ===== EXPORT CSV ===== */
+function exportCSV() {
+    fetch(API + '/export/csv', { headers: authHeaders() })
+    .then(function(r) { return r.blob(); })
+    .then(function(blob) {
+        var url = window.URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'sessions.csv';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    }).catch(function() { showStatus('Export failed', true); });
+}
+
+/* ===== NOTES ===== */
+function addNote() {
+    var content = document.getElementById('noteContent').value.trim();
+    if (!content) { showStatus('Write something', true); return; }
+    var hours = parseInt(document.getElementById('noteHours').value) || 0;
+    var minutes = parseInt(document.getElementById('noteMinutes').value) || 0;
+    if (hours < 0 || minutes < 0) { showStatus('Duration must be positive', true); return; }
+    if (hours === 0 && minutes === 0) { showStatus('Enter at least 1 minute', true); return; }
+    if (minutes > 59) { showStatus('Minutes must be 0-59', true); return; }
+
+    var body = { content: content, duration_hours: hours, duration_minutes: minutes };
+    var nd = document.getElementById('noteDate').value;
+    if (nd) {
+        var dt = new Date(nd + 'T12:00:00Z');
+        if (isNaN(dt.getTime())) { showStatus('Invalid date', true); return; }
+        if (dt.getTime() > Date.now()) { showStatus('No future dates', true); return; }
+        body.note_time = dt.toISOString();
+    }
+
+    fetch(API + '/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body)
+    }).then(function(r) {
+        if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail || 'Failed'); });
+        return r.json();
+    }).then(function() {
+        document.getElementById('noteContent').value = '';
+        document.getElementById('noteHours').value = '';
+        document.getElementById('noteMinutes').value = '';
+        document.getElementById('noteDate').value = '';
+        showStatus('Note added', false);
+        loadNotes();
+    }).catch(function(e) { showStatus(e.message, true); });
+}
+
+function loadNotes() {
+    fetch(API + '/notes', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { return r.json(); })
+    .then(function(notes) {
+        var el = document.getElementById('notesList');
+        if (!notes || notes.length === 0) {
+            el.innerHTML = '<p style="color:#888;font-size:0.9rem;">No notes yet.</p>';
+            return;
+        }
+        el.innerHTML = notes.map(function(n) {
+            var dt = new Date(n.note_time);
+            var dateStr = dt.toLocaleDateString();
+            var durStr = '';
+            var dm = n.duration_minutes || 0;
+            if (dm > 0) {
+                var dh = Math.floor(dm / 60);
+                durStr = (dh > 0 ? dh + 'h ' : '') + (dm % 60) + 'm';
+            }
+            return '<div class="session-item">' +
+                '<span class="subj" style="flex:2;">' + n.content + '</span>' +
+                '<span class="time">' + dateStr + '</span>' +
+                (durStr ? '<span class="dur">' + durStr + '</span>' : '') +
+                '<span class="session-actions">' +
+                    '<button class="btn-edit" onclick="openEditNoteModal(' + n.id + ')">Edit</button>' +
+                    '<button class="btn-del" onclick="deleteNote(' + n.id + ')">Delete</button>' +
+                '</span></div>';
+        }).join('');
+    }).catch(function() {});
+}
+
+function openEditNoteModal(noteId) {
+    editingNoteId = noteId;
+    fetch(API + '/notes', { headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) { return r.json(); })
+    .then(function(notes) {
+        var n = notes.find(function(x) { return x.id === noteId; });
+        if (!n) return;
+        document.getElementById('editNoteContent').value = n.content;
+        document.getElementById('editNoteDate').value = new Date(n.note_time).toISOString().slice(0, 10);
+        var dm = n.duration_minutes || 0;
+        document.getElementById('editNoteHours').value = Math.floor(dm / 60);
+        document.getElementById('editNoteMinutes').value = dm % 60;
+        document.getElementById('editNoteError').textContent = '';
+        document.getElementById('editNoteModal').classList.add('active');
+    });
+}
+
+function closeEditNoteModal() {
+    document.getElementById('editNoteModal').classList.remove('active');
+    editingNoteId = null;
+}
+
+function saveEditNote() {
+    if (!editingNoteId) return;
+    var content = document.getElementById('editNoteContent').value.trim();
+    var nd = document.getElementById('editNoteDate').value;
+    var hours = parseInt(document.getElementById('editNoteHours').value) || 0;
+    var minutes = parseInt(document.getElementById('editNoteMinutes').value) || 0;
+    if (!content) { document.getElementById('editNoteError').textContent = 'Content required'; return; }
+    if (hours < 0 || minutes < 0) { document.getElementById('editNoteError').textContent = 'Duration must be positive'; return; }
+    if (minutes > 59) { document.getElementById('editNoteError').textContent = 'Minutes must be 0-59'; return; }
+    var body = { content: content, duration_hours: hours, duration_minutes: minutes };
+    if (nd) {
+        var dt = new Date(nd + 'T12:00:00Z');
+        if (isNaN(dt.getTime())) { document.getElementById('editNoteError').textContent = 'Invalid date'; return; }
+        if (dt.getTime() > Date.now()) { document.getElementById('editNoteError').textContent = 'No future dates'; return; }
+        body.note_time = dt.toISOString();
+    }
+    fetch(API + '/notes/' + editingNoteId, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body)
+    }).then(function(r) {
+        if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });
+        return r.json();
+    }).then(function() {
+        closeEditNoteModal();
+        showStatus('Note updated', false);
+        loadNotes();
+    }).catch(function(e) { document.getElementById('editNoteError').textContent = e.message; });
+}
+
+function deleteNote(noteId) {
+    if (!confirm('Delete this note?')) return;
+    fetch(API + '/notes/' + noteId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } })
+    .then(function(r) {
+        if (!r.ok) { showStatus('Failed', true); return; }
+        showStatus('Note deleted', false);
+        loadNotes();
+    }).catch(function() { showStatus('Network error', true); });
+}
+
+/* ===== INIT ===== */
+document.getElementById('noteAddBtn').addEventListener('click', addNote);
+
+if (token && username) {
+    showApp();
+} else {
+    showAuth();
+}
+setInterval(loadStats, 30000);
+setInterval(loadNotes, 30000);
 </script>
 </body>
 </html>
