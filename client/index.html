@@ -157,19 +157,18 @@
         </div>
 
         <div class="card">
-            <h2>Study Notes</h2>
+            <h2>Add Session Manually</h2>
             <div class="note-inputs">
-                <input type="text" id="noteContent" placeholder="What did you study?" />
-                <input type="date" id="noteDate" />
+                <input type="text" id="manualSubject" placeholder="Subject" />
+                <input type="date" id="manualDate" />
                 <div class="note-dur">
-                    <input type="number" id="noteHours" placeholder="h" min="0" />
+                    <input type="number" id="manualHours" placeholder="h" min="0" />
                     <span>h</span>
-                    <input type="number" id="noteMinutes" placeholder="m" min="0" max="59" />
+                    <input type="number" id="manualMinutes" placeholder="m" min="0" max="59" />
                     <span>m</span>
                 </div>
-                <button class="note-add" id="noteAddBtn">Add Note</button>
+                <button class="note-add" id="manualAddBtn">Add Session</button>
             </div>
-            <div id="notesList"></div>
         </div>
     </div>
 </div>
@@ -183,27 +182,10 @@
         <div class="dur-row"><input type="number" id="editHours" min="0" placeholder="h" /><span>h</span><input type="number" id="editMinutes" min="0" max="59" placeholder="m" /><span>m</span></div>
         <label>Start date</label>
         <input type="date" id="editStartDt" />
-        <div id="editInfo" class="err" style="color:#888;"></div>
+        <div id="editInfo" style="color:#888;font-size:0.8rem;margin-bottom:8px;"></div>
         <div class="modal-btns">
             <button class="modal-cancel" onclick="closeEditModal()">Cancel</button>
             <button class="modal-save" onclick="saveEdit()">Save</button>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Note Modal -->
-<div class="modal-overlay" id="editNoteModal">
-    <div class="modal">
-        <h3>Edit Note</h3>
-        <input type="text" id="editNoteContent" placeholder="Content" />
-        <label>Date</label>
-        <input type="date" id="editNoteDate" />
-        <label>Duration</label>
-        <div class="dur-row"><input type="number" id="editNoteHours" min="0" placeholder="h" /><span>h</span><input type="number" id="editNoteMinutes" min="0" max="59" placeholder="m" /><span>m</span></div>
-        <div id="editNoteError" class="err"></div>
-        <div class="modal-btns">
-            <button class="modal-cancel" onclick="closeEditNoteModal()">Cancel</button>
-            <button class="modal-save" onclick="saveEditNote()">Save</button>
         </div>
     </div>
 </div>
@@ -218,7 +200,6 @@ var timerInterval = null;
 var startTime = null;
 var dayChart = null;
 var editingSessionId = null;
-var editingNoteId = null;
 
 function authHeaders() {
     return { 'Authorization': 'Bearer ' + token };
@@ -282,7 +263,6 @@ function showApp() {
     document.getElementById('displayUsername').textContent = username;
     loadSubjects();
     loadStats();
-    loadNotes();
 }
 
 /* ===== TIMER ===== */
@@ -527,26 +507,30 @@ function exportCSV() {
     }).catch(function() { showStatus('Export failed', true); });
 }
 
-/* ===== NOTES ===== */
-function addNote() {
-    var content = document.getElementById('noteContent').value.trim();
-    if (!content) { showStatus('Write something', true); return; }
-    var hours = parseInt(document.getElementById('noteHours').value) || 0;
-    var minutes = parseInt(document.getElementById('noteMinutes').value) || 0;
+/* ===== MANUAL SESSION ===== */
+function addManualSession() {
+    var subject = document.getElementById('manualSubject').value.trim();
+    if (!subject) { showStatus('Enter a subject', true); return; }
+    var dateVal = document.getElementById('manualDate').value;
+    if (!dateVal) { showStatus('Pick a date', true); return; }
+    var hours = parseInt(document.getElementById('manualHours').value) || 0;
+    var minutes = parseInt(document.getElementById('manualMinutes').value) || 0;
     if (hours < 0 || minutes < 0) { showStatus('Duration must be positive', true); return; }
     if (hours === 0 && minutes === 0) { showStatus('Enter at least 1 minute', true); return; }
     if (minutes > 59) { showStatus('Minutes must be 0-59', true); return; }
 
-    var body = { content: content, duration_hours: hours, duration_minutes: minutes };
-    var nd = document.getElementById('noteDate').value;
-    if (nd) {
-        var dt = new Date(nd + 'T12:00:00Z');
-        if (isNaN(dt.getTime())) { showStatus('Invalid date', true); return; }
-        if (dt.getTime() > Date.now()) { showStatus('No future dates', true); return; }
-        body.note_time = dt.toISOString();
-    }
+    var dt = new Date(dateVal + 'T12:00:00Z');
+    if (isNaN(dt.getTime())) { showStatus('Invalid date', true); return; }
+    if (dt.getTime() > Date.now()) { showStatus('Cannot set future date', true); return; }
 
-    fetch(API + '/notes', {
+    var body = {
+        subject: subject,
+        date: dt.toISOString(),
+        duration_hours: hours,
+        duration_minutes: minutes
+    };
+
+    fetch(API + '/sessions/manual', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify(body)
@@ -554,113 +538,18 @@ function addNote() {
         if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail || 'Failed'); });
         return r.json();
     }).then(function() {
-        document.getElementById('noteContent').value = '';
-        document.getElementById('noteHours').value = '';
-        document.getElementById('noteMinutes').value = '';
-        document.getElementById('noteDate').value = '';
-        showStatus('Note added', false);
-        loadNotes();
+        document.getElementById('manualSubject').value = '';
+        document.getElementById('manualHours').value = '';
+        document.getElementById('manualMinutes').value = '';
+        document.getElementById('manualDate').value = '';
+        showStatus('Session added', false);
+        loadStats();
+        loadSubjects();
     }).catch(function(e) { showStatus(e.message, true); });
 }
 
-function loadNotes() {
-    fetch(API + '/notes', { headers: { 'Authorization': 'Bearer ' + token } })
-    .then(function(r) { return r.json(); })
-    .then(function(notes) {
-        var el = document.getElementById('notesList');
-        if (!notes || notes.length === 0) {
-            el.innerHTML = '<p style="color:#888;font-size:0.9rem;">No notes yet.</p>';
-            return;
-        }
-        el.innerHTML = notes.map(function(n) {
-            var dt = new Date(n.note_time);
-            var dateStr = dt.toLocaleDateString();
-            var durStr = '';
-            var dm = n.duration_minutes || 0;
-            if (dm > 0) {
-                var dh = Math.floor(dm / 60);
-                durStr = (dh > 0 ? dh + 'h ' : '') + (dm % 60) + 'm';
-            }
-            return '<div class="session-item">' +
-                '<span class="subj" style="flex:2;">' + n.content + '</span>' +
-                '<span class="time">' + dateStr + '</span>' +
-                (durStr ? '<span class="dur">' + durStr + '</span>' : '') +
-                '<span class="session-actions">' +
-                    '<button class="btn-edit" onclick="openEditNoteModal(' + n.id + ')">Edit</button>' +
-                    '<button class="btn-del" onclick="deleteNote(' + n.id + ')">Delete</button>' +
-                '</span></div>';
-        }).join('');
-    }).catch(function() {});
-}
-
-function openEditNoteModal(noteId) {
-    editingNoteId = noteId;
-    fetch(API + '/notes', { headers: { 'Authorization': 'Bearer ' + token } })
-    .then(function(r) { return r.json(); })
-    .then(function(notes) {
-        var n = notes.find(function(x) { return x.id === noteId; });
-        if (!n) return;
-        document.getElementById('editNoteContent').value = n.content;
-        document.getElementById('editNoteDate').value = new Date(n.note_time).toISOString().slice(0, 10);
-        var dm = n.duration_minutes || 0;
-        document.getElementById('editNoteHours').value = Math.floor(dm / 60);
-        document.getElementById('editNoteMinutes').value = dm % 60;
-        document.getElementById('editNoteError').textContent = '';
-        document.getElementById('editNoteModal').classList.add('active');
-    });
-}
-
-function closeEditNoteModal() {
-    document.getElementById('editNoteModal').classList.remove('active');
-    editingNoteId = null;
-}
-
-function saveEditNote() {
-    if (!editingNoteId) return;
-    var content = document.getElementById('editNoteContent').value.trim();
-    var nd = document.getElementById('editNoteDate').value;
-    var hours = parseInt(document.getElementById('editNoteHours').value) || 0;
-    var minutes = parseInt(document.getElementById('editNoteMinutes').value) || 0;
-    var errEl = document.getElementById('editNoteError');
-    errEl.textContent = '';
-    if (!content) { errEl.textContent = 'Content required'; return; }
-    if (hours < 0 || minutes < 0) { errEl.textContent = 'Duration must be positive'; return; }
-    if (minutes > 59) { errEl.textContent = 'Minutes must be 0-59'; return; }
-    var body = { content: content, duration_hours: hours, duration_minutes: minutes };
-    if (nd) {
-        var dt = new Date(nd + 'T12:00:00Z');
-        if (isNaN(dt.getTime())) { errEl.textContent = 'Invalid date'; return; }
-        var today = new Date();
-        var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
-        if (nd > todayStr) { errEl.textContent = 'Cannot set future date'; return; }
-        body.note_time = dt.toISOString();
-    }
-    fetch(API + '/notes/' + editingNoteId, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify(body)
-    }).then(function(r) {
-        if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });
-        return r.json();
-    }).then(function() {
-        closeEditNoteModal();
-        showStatus('Note updated', false);
-        loadNotes();
-    }).catch(function(e) { document.getElementById('editNoteError').textContent = e.message; });
-}
-
-function deleteNote(noteId) {
-    if (!confirm('Delete this note?')) return;
-    fetch(API + '/notes/' + noteId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } })
-    .then(function(r) {
-        if (!r.ok) { showStatus('Failed', true); return; }
-        showStatus('Note deleted', false);
-        loadNotes();
-    }).catch(function() { showStatus('Network error', true); });
-}
-
 /* ===== INIT ===== */
-document.getElementById('noteAddBtn').addEventListener('click', addNote);
+document.getElementById('manualAddBtn').addEventListener('click', addManualSession);
 
 if (token && username) {
     showApp();
@@ -668,7 +557,6 @@ if (token && username) {
     showAuth();
 }
 setInterval(loadStats, 30000);
-setInterval(loadNotes, 30000);
 </script>
 </body>
 </html>

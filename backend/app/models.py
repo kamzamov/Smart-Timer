@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -18,14 +18,4 @@ class StudySession(Base):
     subject = Column(String, nullable=False, index=True)
     start_time = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     end_time = Column(DateTime(timezone=True), nullable=True)
-    user_id = Column(Integer, nullable=False, index=True)
-
-
-class Note(Base):
-    __tablename__ = "notes"
-
-    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    content = Column(Text, nullable=False)
-    note_time = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    duration_minutes = Column(Integer, nullable=False, server_default="0")
     user_id = Column(Integer, nullable=False, index=True)

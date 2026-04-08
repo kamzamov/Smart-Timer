@@ -25,6 +25,13 @@ class SessionStart(BaseModel):
     subject: str
 
 
+class SessionManual(BaseModel):
+    subject: str
+    date: datetime
+    duration_hours: int = 0
+    duration_minutes: int = 0
+
+
 class SessionEdit(BaseModel):
     subject: Optional[str] = None
     start_time: Optional[datetime] = None
@@ -60,27 +67,3 @@ class WeeklyStats(BaseModel):
 
 class SubjectItem(BaseModel):
     subject: str
-
-
-# --- Notes ---
-class NoteCreate(BaseModel):
-    content: str
-    note_time: Optional[datetime] = None
-    duration_hours: int = 0
-    duration_minutes: int = 0
-
-
-class NoteResponse(BaseModel):
-    id: int
-    content: str
-    note_time: datetime
-    duration_minutes: int
-
-    model_config = {"from_attributes": True}
-
-
-class NoteEdit(BaseModel):
-    content: Optional[str] = None
-    note_time: Optional[datetime] = None
-    duration_hours: Optional[int] = None
-    duration_minutes: Optional[int] = None

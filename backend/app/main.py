@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
@@ -12,25 +12,22 @@ import io
 import os
 
 from app.database import get_db, init_db
-from app.models import StudySession, User, Note
+from app.models import StudySession, User
 from app.schemas import (
     UserRegister,
     UserLogin,
     TokenResponse,
     SessionStart,
+    SessionManual,
     SessionEdit,
     SessionResponse,
     WeeklyStats,
     LastSession,
     SubjectItem,
-    NoteCreate,
-    NoteResponse,
-    NoteEdit,
 )
 
 SECRET_KEY = os.getenv("JWT_SECRET", "smart-timer-secret-key-change-in-prod")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -110,7 +107,7 @@ async def login(data: UserLogin, db: AsyncSession = Depends(get_db)):
     return TokenResponse(access_token=token, username=user.username)
 
 
-# --- Session endpoints ---
+# --- Session: Start timer ---
 @app.post("/api/sessions/start", response_model=SessionResponse)
 async def start_session(
     data: SessionStart,
@@ -130,6 +127,7 @@ async def start_session(
     )
 
 
+# --- Session: Stop timer ---
 @app.post("/api/sessions/{session_id}/stop", response_model=SessionResponse)
 async def stop_session(
     session_id: int,
@@ -159,6 +157,46 @@ async def stop_session(
     )
 
 
+# --- Session: Manual add ---
+@app.post("/api/sessions/manual", response_model=SessionResponse)
+async def add_manual_session(
+    data: SessionManual,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if data.duration_hours < 0 or data.duration_minutes < 0:
+        raise HTTPException(status_code=400, detail="Duration must be positive")
+    if data.duration_hours == 0 and data.duration_minutes == 0:
+        raise HTTPException(status_code=400, detail="Enter at least 1 minute")
+    if data.duration_minutes > 59:
+        raise HTTPException(status_code=400, detail="Minutes must be 0-59")
+    if data.date > datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Cannot set future date")
+
+    total_minutes = data.duration_hours * 60 + data.duration_minutes
+    start_time = data.date
+    end_time = start_time + timedelta(minutes=total_minutes)
+
+    session = StudySession(
+        subject=data.subject.strip(),
+        user_id=user.id,
+        start_time=start_time,
+        end_time=end_time,
+    )
+    db.add(session)
+    await db.commit()
+    await db.refresh(session)
+
+    return SessionResponse(
+        id=session.id,
+        subject=session.subject,
+        start_time=session.start_time,
+        end_time=session.end_time,
+        duration_minutes=round(total_minutes, 2),
+    )
+
+
+# --- Session: Edit ---
 @app.put("/api/sessions/{session_id}", response_model=SessionResponse)
 async def edit_session(
     session_id: int,
@@ -200,6 +238,7 @@ async def edit_session(
     )
 
 
+# --- Session: Delete ---
 @app.delete("/api/sessions/{session_id}")
 async def delete_session(
     session_id: int,
@@ -218,6 +257,7 @@ async def delete_session(
     return {"detail": "Session deleted"}
 
 
+# --- Stats ---
 @app.get("/api/stats/weekly", response_model=WeeklyStats)
 async def weekly_stats(
     db: AsyncSession = Depends(get_db),
@@ -263,40 +303,6 @@ async def weekly_stats(
             )
         )
 
-    # Add notes to stats
-    notes_result = await db.execute(
-        select(Note)
-        .where(Note.user_id == user.id)
-        .where(Note.note_time >= monday)
-        .order_by(Note.note_time.desc())
-    )
-    notes = notes_result.scalars().all()
-
-    for n in notes:
-        dur = float(n.duration_minutes)
-        total_minutes += dur
-        day_idx = n.note_time.weekday()
-        by_day[day_idx] += dur
-
-        subject_label = "📝 " + n.content[:30]
-        if subject_label not in by_day_by_subject:
-            by_day_by_subject[subject_label] = [0.0] * 7
-        by_day_by_subject[subject_label][day_idx] += dur
-
-        # For by_subject tracking
-        by_subject[subject_label] = by_subject.get(subject_label, 0.0) + dur
-
-        last_sessions.append(
-            LastSession(
-                id=n.id,
-                subject="Note: " + n.content,
-                start_time=n.note_time,
-                end_time=n.note_time,
-                duration_minutes=round(dur, 2),
-            )
-        )
-
-    # Sort all by time desc
     last_sessions.sort(key=lambda x: x.start_time, reverse=True)
 
     return WeeklyStats(
@@ -308,6 +314,7 @@ async def weekly_stats(
     )
 
 
+# --- Subjects ---
 @app.get("/api/subjects", response_model=list[SubjectItem])
 async def list_subjects(
     db: AsyncSession = Depends(get_db),
@@ -323,6 +330,7 @@ async def list_subjects(
     return [SubjectItem(subject=s) for s in subjects]
 
 
+# --- All sessions ---
 @app.get("/api/sessions")
 async def list_sessions(
     db: AsyncSession = Depends(get_db),
@@ -351,6 +359,7 @@ async def list_sessions(
     return out
 
 
+# --- Export CSV ---
 @app.get("/api/export/csv")
 async def export_csv(
     db: AsyncSession = Depends(get_db),
@@ -377,94 +386,3 @@ async def export_csv(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=sessions.csv"},
     )
-
-
-# --- Notes endpoints ---
-@app.post("/api/notes", response_model=NoteResponse)
-async def create_note(
-    data: NoteCreate,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    if data.duration_hours < 0 or data.duration_minutes < 0:
-        raise HTTPException(status_code=400, detail="Duration must be positive")
-    if data.duration_minutes > 59:
-        raise HTTPException(status_code=400, detail="Minutes must be 0-59")
-
-    nt = data.note_time or datetime.now(timezone.utc)
-    if nt > datetime.now(timezone.utc):
-        raise HTTPException(status_code=400, detail="Cannot create notes for future dates")
-
-    total_min = data.duration_hours * 60 + data.duration_minutes
-    note = Note(content=data.content.strip(), note_time=nt, duration_minutes=total_min, user_id=user.id)
-    db.add(note)
-    await db.commit()
-    await db.refresh(note)
-    return NoteResponse(id=note.id, content=note.content, note_time=note.note_time, duration_minutes=note.duration_minutes)
-
-
-@app.get("/api/notes", response_model=list[NoteResponse])
-async def list_notes(
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    result = await db.execute(
-        select(Note)
-        .where(Note.user_id == user.id)
-        .order_by(Note.note_time.desc())
-        .limit(100)
-    )
-    notes = result.scalars().all()
-    return [NoteResponse(id=n.id, content=n.content, note_time=n.note_time, duration_minutes=n.duration_minutes) for n in notes]
-
-
-@app.put("/api/notes/{note_id}", response_model=NoteResponse)
-async def edit_note(
-    note_id: int,
-    data: NoteEdit,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    result = await db.execute(select(Note).where(Note.id == note_id))
-    note = result.scalar_one_or_none()
-    if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
-    if note.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Not your note")
-
-    if data.content is not None:
-        note.content = data.content.strip()
-    if data.note_time is not None:
-        if data.note_time > datetime.now(timezone.utc):
-            raise HTTPException(status_code=400, detail="Cannot set note time to future date")
-        note.note_time = data.note_time
-    if data.duration_hours is not None or data.duration_minutes is not None:
-        h = data.duration_hours if data.duration_hours is not None else note.duration_minutes // 60
-        m = data.duration_minutes if data.duration_minutes is not None else note.duration_minutes % 60
-        if h < 0 or m < 0:
-            raise HTTPException(status_code=400, detail="Duration must be positive")
-        if m > 59:
-            raise HTTPException(status_code=400, detail="Minutes must be 0-59")
-        note.duration_minutes = h * 60 + m
-
-    await db.commit()
-    await db.refresh(note)
-    return NoteResponse(id=note.id, content=note.content, note_time=note.note_time, duration_minutes=note.duration_minutes)
-
-
-@app.delete("/api/notes/{note_id}")
-async def delete_note(
-    note_id: int,
-    db: AsyncSession = Depends(get_db),
-    user: User = Depends(get_current_user),
-):
-    result = await db.execute(select(Note).where(Note.id == note_id))
-    note = result.scalar_one_or_none()
-    if not note:
-        raise HTTPException(status_code=404, detail="Note not found")
-    if note.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Not your note")
-
-    await db.delete(note)
-    await db.commit()
-    return {"detail": "Note deleted"}
