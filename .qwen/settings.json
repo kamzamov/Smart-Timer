@@ -6,7 +6,11 @@
       "Bash(scp *)",
       "Bash(ssh *)",
       "Bash(python3 *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(printf *)",
+      "Bash(git push)",
+      "Bash(echo *)"
     ]
   },
   "$version": 3

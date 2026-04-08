@@ -618,14 +618,18 @@ function saveEditNote() {
     var nd = document.getElementById('editNoteDate').value;
     var hours = parseInt(document.getElementById('editNoteHours').value) || 0;
     var minutes = parseInt(document.getElementById('editNoteMinutes').value) || 0;
-    if (!content) { document.getElementById('editNoteError').textContent = 'Content required'; return; }
-    if (hours < 0 || minutes < 0) { document.getElementById('editNoteError').textContent = 'Duration must be positive'; return; }
-    if (minutes > 59) { document.getElementById('editNoteError').textContent = 'Minutes must be 0-59'; return; }
+    var errEl = document.getElementById('editNoteError');
+    errEl.textContent = '';
+    if (!content) { errEl.textContent = 'Content required'; return; }
+    if (hours < 0 || minutes < 0) { errEl.textContent = 'Duration must be positive'; return; }
+    if (minutes > 59) { errEl.textContent = 'Minutes must be 0-59'; return; }
     var body = { content: content, duration_hours: hours, duration_minutes: minutes };
     if (nd) {
         var dt = new Date(nd + 'T12:00:00Z');
-        if (isNaN(dt.getTime())) { document.getElementById('editNoteError').textContent = 'Invalid date'; return; }
-        if (dt.getTime() > Date.now()) { document.getElementById('editNoteError').textContent = 'No future dates'; return; }
+        if (isNaN(dt.getTime())) { errEl.textContent = 'Invalid date'; return; }
+        var today = new Date();
+        var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+        if (nd > todayStr) { errEl.textContent = 'Cannot set future date'; return; }
         body.note_time = dt.toISOString();
     }
     fetch(API + '/notes/' + editingNoteId, {
