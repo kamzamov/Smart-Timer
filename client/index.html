@@ -247,7 +247,7 @@ function handleAuth() {
         var cp = document.getElementById('authConfirmPassword').value;
         if (p !== cp) { showAuthStatus('Passwords do not match', true); return; }
     }
-    var endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+    var endpoint = isRegisterMode ? '/auth/register' : '/auth/login';
     fetch(API + endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -325,7 +325,7 @@ function startSession() {
     if (!subject) { showStatus('Enter a subject', true); return; }
     fetch(API + '/sessions/start', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ subject: subject })
     }).then(function(r) { return r.json(); })
     .then(function(data) {
@@ -486,7 +486,7 @@ function saveEdit() {
 
     fetch(API + '/sessions/' + editingSessionId, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify(body)
     }).then(function(r) {
         if (!r.ok) return r.json().then(function(d) { throw new Error(d.detail); });

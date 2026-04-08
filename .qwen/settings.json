@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mkdir *)"
+      "Bash(mkdir *)",
+      "Bash(curl *)",
+      "Bash(scp *)",
+      "Bash(ssh *)",
+      "Bash(python3 *)",
+      "Bash(git add *)"
     ]
   },
   "$version": 3
