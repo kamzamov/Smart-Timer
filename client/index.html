@@ -474,6 +474,9 @@ function saveEdit() {
     if (subject) body.subject = subject;
     var startMs;
     if (startDt) {
+        var today = new Date();
+        var todayStr = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+        if (startDt > todayStr) { showStatus('Cannot set future date', true); return; }
         var dt = new Date(startDt + 'T12:00:00Z');
         if (isNaN(dt.getTime())) { showStatus('Invalid date', true); return; }
         startMs = dt.getTime();

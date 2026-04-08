@@ -176,8 +176,12 @@ async def edit_session(
     if data.subject is not None:
         session.subject = data.subject.strip()
     if data.start_time is not None:
+        if data.start_time > datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Cannot set start time to future date")
         session.start_time = data.start_time
     if data.end_time is not None:
+        if data.end_time > datetime.now(timezone.utc):
+            raise HTTPException(status_code=400, detail="Cannot set end time to future date")
         session.end_time = data.end_time
 
     await db.commit()
