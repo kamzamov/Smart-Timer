@@ -101,9 +101,9 @@
 <div id="authView">
     <div class="auth-container">
         <h2 id="authTitle">Login</h2>
-        <input type="text" id="authUsername" placeholder="Username" />
-        <input type="password" id="authPassword" placeholder="Password" />
-        <input type="password" id="authConfirmPassword" placeholder="Confirm Password" style="display:none;" />
+        <input type="text" id="authUsername" placeholder="Username" autocomplete="off" />
+        <input type="password" id="authPassword" placeholder="Password" autocomplete="off" />
+        <input type="password" id="authConfirmPassword" placeholder="Confirm Password" style="display:none;" autocomplete="off" />
         <button class="btn" id="authBtn" onclick="handleAuth()">Login</button>
         <div class="auth-toggle" id="authToggle" onclick="toggleAuthMode()">Don't have an account? <strong>Register</strong></div>
         <div id="authStatus"></div>
@@ -126,7 +126,7 @@
         <div class="card timer-section">
             <h2>Study Session</h2>
             <div class="subject-input-group">
-                <input type="text" id="subjectInput" list="subjectList" placeholder="Enter subject..." />
+                <input type="text" id="subjectInput" list="subjectList" placeholder="Enter subject..." autocomplete="off" />
                 <datalist id="subjectList"></datalist>
             </div>
             <div class="timer-display" id="timerDisplay">00:00:00</div>
@@ -159,12 +159,12 @@
         <div class="card">
             <h2>Add Session Manually</h2>
             <div class="note-inputs">
-                <input type="text" id="manualSubject" placeholder="Subject" />
-                <input type="date" id="manualDate" />
+                <input type="text" id="manualSubject" placeholder="Subject" autocomplete="off" />
+                <input type="date" id="manualDate" autocomplete="off" />
                 <div class="note-dur">
-                    <input type="number" id="manualHours" placeholder="h" min="0" />
+                    <input type="number" id="manualHours" placeholder="h" min="0" autocomplete="off" />
                     <span>h</span>
-                    <input type="number" id="manualMinutes" placeholder="m" min="0" max="59" />
+                    <input type="number" id="manualMinutes" placeholder="m" min="0" max="59" autocomplete="off" />
                     <span>m</span>
                 </div>
                 <button class="note-add" id="manualAddBtn">Add Session</button>
@@ -177,11 +177,11 @@
 <div class="modal-overlay" id="editModal">
     <div class="modal">
         <h3>Edit Session</h3>
-        <input type="text" id="editSubject" placeholder="Subject" />
+        <input type="text" id="editSubject" placeholder="Subject" autocomplete="off" />
         <label>Duration</label>
-        <div class="dur-row"><input type="number" id="editHours" min="0" placeholder="h" /><span>h</span><input type="number" id="editMinutes" min="0" max="59" placeholder="m" /><span>m</span></div>
+        <div class="dur-row"><input type="number" id="editHours" min="0" placeholder="h" autocomplete="off" /><span>h</span><input type="number" id="editMinutes" min="0" max="59" placeholder="m" autocomplete="off" /><span>m</span></div>
         <label>Start date</label>
-        <input type="date" id="editStartDt" />
+        <input type="date" id="editStartDt" autocomplete="off" />
         <div id="editInfo" style="color:#888;font-size:0.8rem;margin-bottom:8px;"></div>
         <div class="modal-btns">
             <button class="modal-cancel" onclick="closeEditModal()">Cancel</button>
