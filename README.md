@@ -68,3 +68,6 @@ The VM is at `10.93.25.19`. After deploy:
 - **Backend**: FastAPI + SQLAlchemy (async) + PostgreSQL
 - **Frontend**: Vanilla HTML/JS + Chart.js
 - **Infra**: Docker Compose, Nginx
+
+<img width="904" height="925" alt="image" src="https://github.com/user-attachments/assets/3ecbff16-d0ff-420e-8e4c-3b3f8258be92" />
+
